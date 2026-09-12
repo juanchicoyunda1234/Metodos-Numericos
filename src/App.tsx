@@ -12,7 +12,9 @@ import { ResultSummary } from '@/components/ResultSummary/ResultSummary'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import type { MethodId } from '@/engine/types'
+import { newtonRaphson } from '@/engine/newtonRaphson'
+import { InvalidExpressionError } from '@/engine/parser'
+import type { MethodId, NumericalResult } from '@/engine/types'
 
 const METHOD_TITLE: Record<MethodId, string> = {
   'newton-raphson': 'Newton-Raphson',
@@ -50,13 +52,55 @@ function App() {
     xTarget: '',
   })
 
+  const [result, setResult] = useState<NumericalResult | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
   const isInterpolation = selectedMethod === 'newton-interpolacion' || selectedMethod === 'lagrange'
   const isComparison = selectedMethod === 'comparacion'
 
   const handleSelectMethod = (id: MethodId) => {
     setSelectedMethod(id)
     setMode('resultado')
+    setResult(null)
+    setErrorMessage(null)
   }
+
+  const handleExecute = () => {
+    setErrorMessage(null)
+
+    if (selectedMethod !== 'newton-raphson') return
+
+    const x0 = Number(rootParams.x0)
+    const tolerance = Number(rootParams.tolerance)
+    const maxIterations = Number(rootParams.maxIterations)
+
+    if (!expression.trim()) {
+      setErrorMessage('Ingresa una expresión f(x)')
+      return
+    }
+    if (!Number.isFinite(x0)) {
+      setErrorMessage('x₀ debe ser un número válido')
+      return
+    }
+    if (!Number.isFinite(tolerance) || tolerance <= 0) {
+      setErrorMessage('La tolerancia debe ser un número mayor que 0')
+      return
+    }
+    if (!Number.isInteger(maxIterations) || maxIterations <= 0) {
+      setErrorMessage('El máximo de iteraciones debe ser un entero positivo')
+      return
+    }
+
+    try {
+      setResult(newtonRaphson({ expression, x0, tolerance, maxIterations }))
+    } catch (err) {
+      setResult(null)
+      setErrorMessage(err instanceof InvalidExpressionError ? err.message : 'Ocurrió un error inesperado al calcular')
+    }
+  }
+
+  const activeResult = selectedMethod === 'newton-raphson' ? result : null
+  const activeIterations = activeResult?.iterationData ?? []
 
   return (
     <div className="flex h-screen flex-col bg-bg text-text">
@@ -111,8 +155,11 @@ function App() {
               />
             </section>
 
-            <div>
-              <Button type="button">Ejecutar</Button>
+            <div className="flex items-center gap-3">
+              <Button type="button" onClick={handleExecute}>
+                Ejecutar
+              </Button>
+              {errorMessage && <span className="text-sm text-danger">{errorMessage}</span>}
             </div>
 
             {isComparison ? (
@@ -125,10 +172,10 @@ function App() {
                 </TabsList>
 
                 <TabsContent value="resultado" className="flex flex-col gap-4 pt-4">
-                  <ResultSummary result={null} precision={precision} />
+                  <ResultSummary result={activeResult} precision={precision} />
                   <IterationTable
                     method={selectedMethod}
-                    iterations={[]}
+                    iterations={activeIterations}
                     points={interpolationParams.points}
                     precision={precision}
                   />
@@ -136,7 +183,7 @@ function App() {
                 </TabsContent>
 
                 <TabsContent value="procedimiento" className="pt-4">
-                  <ProcedureView method={selectedMethod} iterations={[]} precision={precision} />
+                  <ProcedureView method={selectedMethod} iterations={activeIterations} precision={precision} />
                 </TabsContent>
               </Tabs>
             )}
