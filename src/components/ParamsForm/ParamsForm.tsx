@@ -1,6 +1,6 @@
 import { Trash2 } from 'lucide-react'
 
-import type { MethodId, Point } from '@/engine/types'
+import type { MethodId } from '@/engine/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,8 +11,13 @@ interface RootFindingParams {
   maxIterations: string
 }
 
+interface InterpolationPointInput {
+  x: string
+  y: string
+}
+
 interface InterpolationParams {
-  points: Point[]
+  points: InterpolationPointInput[]
   xTarget: string
 }
 
@@ -92,16 +97,17 @@ function InterpolationParamsForm({
   params: InterpolationParams
   onChange: (params: InterpolationParams) => void
 }) {
-  const updatePoint = (index: number, key: keyof Point, raw: string) => {
-    const next = params.points.map((p, i) => (i === index ? { ...p, [key]: Number(raw) } : p))
+  const updatePoint = (index: number, key: keyof InterpolationPointInput, raw: string) => {
+    const next = params.points.map((p, i) => (i === index ? { ...p, [key]: raw } : p))
     onChange({ ...params, points: next })
   }
 
   const addPoint = () => {
-    onChange({ ...params, points: [...params.points, { x: 0, y: 0 }] })
+    onChange({ ...params, points: [...params.points, { x: '', y: '' }] })
   }
 
   const removePoint = (index: number) => {
+    if (params.points.length <= 2) return
     onChange({ ...params, points: params.points.filter((_, i) => i !== index) })
   }
 
@@ -136,6 +142,7 @@ function InterpolationParamsForm({
                 size="sm"
                 onClick={() => removePoint(index)}
                 aria-label="Eliminar punto"
+                disabled={params.points.length <= 2}
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
@@ -144,13 +151,13 @@ function InterpolationParamsForm({
         </div>
       </div>
       <div className="flex flex-col gap-1.5 max-w-[220px]">
-        <Label htmlFor="xTarget">x a interpolar</Label>
+        <Label htmlFor="xTarget">x a interpolar (opcional)</Label>
         <Input
           id="xTarget"
           inputMode="decimal"
           value={params.xTarget}
           onChange={(e) => onChange({ ...params, xTarget: e.target.value })}
-          placeholder="0"
+          placeholder="evaluar P(x)"
         />
       </div>
     </div>
@@ -158,4 +165,4 @@ function InterpolationParamsForm({
 }
 
 export { ParamsForm }
-export type { InterpolationParams, RootFindingParams }
+export type { InterpolationParams, InterpolationPointInput, RootFindingParams }

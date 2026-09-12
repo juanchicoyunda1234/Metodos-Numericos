@@ -33,7 +33,11 @@ function ConvergenceChart({ option, height = 320 }: ConvergenceChartProps) {
   }, [])
 
   useEffect(() => {
-    if (!chartRef.current || !option) return
+    if (!chartRef.current) return
+    if (!option) {
+      chartRef.current.clear()
+      return
+    }
     chartRef.current.setOption({ ...BASE_OPTION, ...option }, true)
   }, [option])
 

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import type { InterpolationParams, RootFindingParams } from '@/components/ParamsForm/ParamsForm'
 import { ComparisonView } from '@/components/ComparisonView/ComparisonView'
 import { ConvergenceChart } from '@/components/ConvergenceChart/ConvergenceChart'
+import { buildChartOption } from '@/components/ConvergenceChart/chartOptions'
 import { IterationTable } from '@/components/IterationTable/IterationTable'
 import { MathInput } from '@/components/MathInput/MathInput'
 import { MethodSelector } from '@/components/MethodSelector/MethodSelector'
@@ -12,9 +13,12 @@ import { ResultSummary } from '@/components/ResultSummary/ResultSummary'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { lagrangeInterpolation } from '@/engine/lagrangeInterpolation'
+import { newtonInterpolation } from '@/engine/newtonInterpolation'
 import { newtonRaphson } from '@/engine/newtonRaphson'
+import { newtonRaphsonConstante } from '@/engine/newtonRaphsonConstante'
 import { InvalidExpressionError } from '@/engine/parser'
-import type { MethodId, NumericalResult } from '@/engine/types'
+import type { MethodId, NumericalResult, Point } from '@/engine/types'
 
 const METHOD_TITLE: Record<MethodId, string> = {
   'newton-raphson': 'Newton-Raphson',
@@ -46,13 +50,15 @@ function App() {
   })
   const [interpolationParams, setInterpolationParams] = useState<InterpolationParams>({
     points: [
-      { x: 0, y: 0 },
-      { x: 0, y: 0 },
+      { x: '', y: '' },
+      { x: '', y: '' },
     ],
     xTarget: '',
   })
 
   const [result, setResult] = useState<NumericalResult | null>(null)
+  const [classicResult, setClassicResult] = useState<NumericalResult | null>(null)
+  const [constantResult, setConstantResult] = useState<NumericalResult | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const isInterpolation = selectedMethod === 'newton-interpolacion' || selectedMethod === 'lagrange'
@@ -62,45 +68,106 @@ function App() {
     setSelectedMethod(id)
     setMode('resultado')
     setResult(null)
+    setClassicResult(null)
+    setConstantResult(null)
     setErrorMessage(null)
   }
 
   const handleExecute = () => {
     setErrorMessage(null)
 
-    if (selectedMethod !== 'newton-raphson') return
+    const isClassic = selectedMethod === 'newton-raphson'
+    const isConstant = selectedMethod === 'newton-raphson-constante'
 
-    const x0 = Number(rootParams.x0)
-    const tolerance = Number(rootParams.tolerance)
-    const maxIterations = Number(rootParams.maxIterations)
+    if (isClassic || isConstant || isComparison) {
+      const x0 = Number(rootParams.x0)
+      const tolerance = Number(rootParams.tolerance)
+      const maxIterations = Number(rootParams.maxIterations)
 
-    if (!expression.trim()) {
-      setErrorMessage('Ingresa una expresión f(x)')
-      return
-    }
-    if (!Number.isFinite(x0)) {
-      setErrorMessage('x₀ debe ser un número válido')
-      return
-    }
-    if (!Number.isFinite(tolerance) || tolerance <= 0) {
-      setErrorMessage('La tolerancia debe ser un número mayor que 0')
-      return
-    }
-    if (!Number.isInteger(maxIterations) || maxIterations <= 0) {
-      setErrorMessage('El máximo de iteraciones debe ser un entero positivo')
+      if (!expression.trim()) {
+        setErrorMessage('Ingresa una expresión f(x)')
+        return
+      }
+      if (!Number.isFinite(x0)) {
+        setErrorMessage('x₀ debe ser un número válido')
+        return
+      }
+      if (!Number.isFinite(tolerance) || tolerance <= 0) {
+        setErrorMessage('La tolerancia debe ser un número mayor que 0')
+        return
+      }
+      if (!Number.isInteger(maxIterations) || maxIterations <= 0) {
+        setErrorMessage('El máximo de iteraciones debe ser un entero positivo')
+        return
+      }
+
+      try {
+        const params = { expression, x0, tolerance, maxIterations }
+        if (isComparison) {
+          setClassicResult(newtonRaphson(params))
+          setConstantResult(newtonRaphsonConstante(params))
+          setResult(null)
+        } else {
+          setResult(isClassic ? newtonRaphson(params) : newtonRaphsonConstante(params))
+          setClassicResult(null)
+          setConstantResult(null)
+        }
+      } catch (err) {
+        setResult(null)
+        setClassicResult(null)
+        setConstantResult(null)
+        setErrorMessage(err instanceof InvalidExpressionError ? err.message : 'Ocurrió un error inesperado al calcular')
+      }
       return
     }
 
-    try {
-      setResult(newtonRaphson({ expression, x0, tolerance, maxIterations }))
-    } catch (err) {
-      setResult(null)
-      setErrorMessage(err instanceof InvalidExpressionError ? err.message : 'Ocurrió un error inesperado al calcular')
+    if (selectedMethod === 'newton-interpolacion' || selectedMethod === 'lagrange') {
+      const points: Point[] = []
+      for (const point of interpolationParams.points) {
+        if (!point.x.trim() || !point.y.trim()) {
+          setErrorMessage('Datos incompletos')
+          return
+        }
+        const x = Number(point.x)
+        const y = Number(point.y)
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+          setErrorMessage('Los puntos contienen valores no numéricos')
+          return
+        }
+        points.push({ x, y })
+      }
+
+      let xTarget: number | undefined
+      if (interpolationParams.xTarget.trim()) {
+        xTarget = Number(interpolationParams.xTarget)
+        if (!Number.isFinite(xTarget)) {
+          setErrorMessage('x a interpolar debe ser un número válido')
+          return
+        }
+      }
+
+      setClassicResult(null)
+      setConstantResult(null)
+      setResult(
+        selectedMethod === 'newton-interpolacion'
+          ? newtonInterpolation({ points, xTarget })
+          : lagrangeInterpolation({ points, xTarget }),
+      )
     }
   }
 
-  const activeResult = selectedMethod === 'newton-raphson' ? result : null
+  const isRootFinding = selectedMethod === 'newton-raphson' || selectedMethod === 'newton-raphson-constante'
+  const activeResult = isRootFinding || isInterpolation ? result : null
   const activeIterations = activeResult?.iterationData ?? []
+  const tablePoints = activeResult?.interpolationPoints ?? interpolationParams.points.map((p) => ({
+    x: p.x.trim() === '' ? Number.NaN : Number(p.x),
+    y: p.y.trim() === '' ? Number.NaN : Number(p.y),
+  }))
+  const chartOption = useMemo(
+    () => buildChartOption(selectedMethod, activeResult, precision),
+    [selectedMethod, activeResult, precision],
+  )
+  const chartHeight = isRootFinding ? 440 : 340
 
   return (
     <div className="flex h-screen flex-col bg-bg text-text">
@@ -163,7 +230,7 @@ function App() {
             </div>
 
             {isComparison ? (
-              <ComparisonView classic={null} constant={null} precision={precision} />
+              <ComparisonView classic={classicResult} constant={constantResult} precision={precision} />
             ) : (
               <Tabs value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
                 <TabsList>
@@ -172,18 +239,24 @@ function App() {
                 </TabsList>
 
                 <TabsContent value="resultado" className="flex flex-col gap-4 pt-4">
-                  <ResultSummary result={activeResult} precision={precision} />
+                  <ResultSummary result={activeResult} precision={precision} method={selectedMethod} />
                   <IterationTable
                     method={selectedMethod}
                     iterations={activeIterations}
-                    points={interpolationParams.points}
+                    points={tablePoints}
                     precision={precision}
+                    dividedDifferences={activeResult?.dividedDifferences}
+                    lagrangeTerms={activeResult?.lagrangeTerms}
+                    monomialCoefficients={activeResult?.monomialCoefficients}
                   />
-                  <ConvergenceChart option={null} />
+                  <div className="flex flex-col gap-2">
+                    <div className="text-[11px] uppercase tracking-wide text-text-dim">Gráfica</div>
+                    <ConvergenceChart option={chartOption} height={chartHeight} />
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="procedimiento" className="pt-4">
-                  <ProcedureView method={selectedMethod} iterations={activeIterations} precision={precision} />
+                  <ProcedureView method={selectedMethod} precision={precision} result={activeResult} />
                 </TabsContent>
               </Tabs>
             )}

@@ -1,8 +1,12 @@
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 
-import type { Iteration, MethodId, Point } from '@/engine/types'
+import { ResultingPolynomial } from '@/components/ResultSummary/ResultSummary'
+import { Button } from '@/components/ui/button'
+import { lagrangeBasisLatex } from '@/engine/lagrangeInterpolation'
+import { monomialLatex } from '@/engine/polynomial'
+import type { Iteration, LagrangeTerm, MethodId, Point } from '@/engine/types'
 import { cn } from '@/lib/utils'
 
 const iterationColumnHelper = createColumnHelper<Iteration>()
@@ -18,6 +22,9 @@ interface IterationTableProps {
   iterations: Iteration[]
   points: Point[]
   precision: number
+  dividedDifferences?: number[][]
+  lagrangeTerms?: LagrangeTerm[]
+  monomialCoefficients?: number[]
 }
 
 function EmptyState({ message }: { message: string }) {
@@ -166,11 +173,261 @@ function InterpolationPointsTable({ points, precision }: { points: Point[]; prec
   )
 }
 
-function IterationTable({ method, iterations, points, precision }: IterationTableProps) {
-  const isInterpolation = method === 'newton-interpolacion' || method === 'lagrange'
+function differenceHeader(order: number) {
+  if (order === 0) return 'f[xᵢ]'
+  if (order === 1) return 'f[xᵢ, xᵢ₊₁]'
+  return `f[xᵢ, …, xᵢ₊${order}]`
+}
 
-  if (isInterpolation) {
-    return <InterpolationPointsTable points={points} precision={precision} />
+function DividedDifferenceTable({
+  points,
+  table,
+  precision,
+}: {
+  points: Point[]
+  table: number[][]
+  precision: number
+}) {
+  const maxOrder = table[0]?.length ?? 0
+  const data = useMemo(
+    () =>
+      points.map((point, i) => ({
+        i,
+        x: point.x,
+        values: Array.from({ length: maxOrder }, (_, k) => table[i]?.[k]),
+      })),
+    [maxOrder, points, table],
+  )
+
+  const columns = useMemo(() => {
+    const diffColumnHelper = createColumnHelper<{ i: number; x: number; values: (number | undefined)[] }>()
+    return [
+      diffColumnHelper.accessor('i', { header: 'i' }),
+      diffColumnHelper.accessor('x', {
+        header: 'xᵢ',
+        cell: (ctx) => formatCell(ctx.getValue(), precision),
+      }),
+      ...Array.from({ length: maxOrder }, (_, k) =>
+        diffColumnHelper.accessor((row) => row.values[k], {
+          id: `diff-${k}`,
+          header: differenceHeader(k),
+          cell: (ctx) => formatCell(ctx.getValue(), precision),
+        }),
+      ),
+    ]
+  }, [maxOrder, precision])
+
+  const reactTable = useReactTable({ data, columns, getCoreRowModel: getCoreRowModel() })
+
+  if (points.length === 0 || maxOrder === 0) {
+    return <EmptyState message="Ejecuta el método para ver las diferencias divididas" />
+  }
+
+  return (
+    <TableShell>
+      <thead>
+        {reactTable.getHeaderGroups().map((headerGroup) => (
+          <tr key={headerGroup.id} className="border-b border-border-strong bg-panel-alt">
+            {headerGroup.headers.map((header) => (
+              <th
+                key={header.id}
+                className="whitespace-nowrap px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wide text-text-muted"
+              >
+                {flexRender(header.column.columnDef.header, header.getContext())}
+              </th>
+            ))}
+          </tr>
+        ))}
+      </thead>
+      <tbody>
+        {reactTable.getRowModel().rows.map((row, i) => (
+          <tr key={row.id} className={cn('border-b border-border', i % 2 === 1 && 'bg-panel-alt/40')}>
+            {row.getVisibleCells().map((cell) => (
+              <td key={cell.id} className="whitespace-nowrap px-3 py-1.5 font-mono-nums text-text">
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </TableShell>
+  )
+}
+
+const lagrangeColumnHelper = createColumnHelper<LagrangeTerm>()
+const MANY_POINTS = 6
+
+function LagrangeTermsTable({
+  terms,
+  points,
+  precision,
+}: {
+  terms: LagrangeTerm[]
+  points: Point[]
+  precision: number
+}) {
+  const [view, setView] = useState<'simplificada' | 'detallada'>(
+    terms.length >= MANY_POINTS ? 'simplificada' : 'detallada',
+  )
+
+  const columns = useMemo(
+    () => [
+      lagrangeColumnHelper.accessor('i', { header: 'i' }),
+      lagrangeColumnHelper.accessor('x', {
+        header: 'xᵢ',
+        cell: (ctx) => formatCell(ctx.getValue(), precision),
+      }),
+      lagrangeColumnHelper.accessor('y', {
+        header: 'yᵢ',
+        cell: (ctx) => formatCell(ctx.getValue(), precision),
+      }),
+      lagrangeColumnHelper.accessor('basis', {
+        header: 'Lᵢ(x)',
+        cell: (ctx) => formatCell(ctx.getValue(), precision),
+      }),
+      lagrangeColumnHelper.accessor('term', {
+        header: 'yᵢ·Lᵢ(x)',
+        cell: (ctx) => formatCell(ctx.getValue(), precision),
+      }),
+    ],
+    [precision],
+  )
+
+  const table = useReactTable({ data: terms, columns, getCoreRowModel: getCoreRowModel() })
+  const evaluated = terms.every((term) => term.term !== undefined)
+  const total = evaluated ? terms.reduce((sum, term) => sum + (term.term ?? 0), 0) : undefined
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant={view === 'simplificada' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setView('simplificada')}
+        >
+          Simplificada
+        </Button>
+        <Button
+          type="button"
+          variant={view === 'detallada' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setView('detallada')}
+        >
+          Detallada
+        </Button>
+      </div>
+
+      <TableShell>
+        <thead>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id} className="border-b border-border-strong bg-panel-alt">
+              {headerGroup.headers.map((header) => (
+                <th
+                  key={header.id}
+                  className="whitespace-nowrap px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wide text-text-muted"
+                >
+                  {flexRender(header.column.columnDef.header, header.getContext())}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map((row, i) => (
+            <tr key={row.id} className={cn('border-b border-border', i % 2 === 1 && 'bg-panel-alt/40')}>
+              {row.getVisibleCells().map((cell) => (
+                <td key={cell.id} className="whitespace-nowrap px-3 py-1.5 font-mono-nums text-text">
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+        {evaluated && (
+          <tfoot>
+            <tr className="border-t border-border-strong bg-panel-alt">
+              <td colSpan={4} className="px-3 py-1.5 text-[11px] uppercase tracking-wide text-text-muted">
+                P(x)
+              </td>
+              <td className="whitespace-nowrap px-3 py-1.5 font-mono-nums text-accent-strong">
+                {formatCell(total, precision)}
+              </td>
+            </tr>
+          </tfoot>
+        )}
+      </TableShell>
+
+      {view === 'detallada' && (
+        <div className="flex flex-col gap-2">
+          {terms.map((term) => {
+            const latex = lagrangeBasisLatex(term.i, points, precision)
+            return (
+              <div key={term.i} className="border border-border px-4 py-3">
+                <math-field key={latex} read-only className="block">
+                  {latex}
+                </math-field>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function IterationTable({
+  method,
+  iterations,
+  points,
+  precision,
+  dividedDifferences,
+  lagrangeTerms,
+  monomialCoefficients,
+}: IterationTableProps) {
+  const resulting =
+    monomialCoefficients && monomialCoefficients.length > 0 ? (
+      <ResultingPolynomial latex={monomialLatex(monomialCoefficients, precision)} />
+    ) : null
+
+  if (method === 'newton-interpolacion') {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <div className="text-[11px] uppercase tracking-wide text-text-dim">Datos originales</div>
+          <InterpolationPointsTable points={points} precision={precision} />
+        </div>
+        <div className="flex flex-col gap-2">
+          <div className="text-[11px] uppercase tracking-wide text-text-dim">Diferencias divididas</div>
+          {dividedDifferences ? (
+            <DividedDifferenceTable points={points} table={dividedDifferences} precision={precision} />
+          ) : (
+            <EmptyState message="Ejecuta el método para ver las diferencias divididas" />
+          )}
+        </div>
+        {resulting}
+      </div>
+    )
+  }
+
+  if (method === 'lagrange') {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <div className="text-[11px] uppercase tracking-wide text-text-dim">Datos originales</div>
+          <InterpolationPointsTable points={points} precision={precision} />
+        </div>
+        <div className="flex flex-col gap-2">
+          <div className="text-[11px] uppercase tracking-wide text-text-dim">Polinomios base Lᵢ(x)</div>
+          {lagrangeTerms ? (
+            <LagrangeTermsTable terms={lagrangeTerms} points={points} precision={precision} />
+          ) : (
+            <EmptyState message="Ejecuta el método para ver Lᵢ(x) y yᵢ·Lᵢ(x)" />
+          )}
+        </div>
+        {resulting}
+      </div>
+    )
   }
 
   return <NewtonIterationTable method={method} iterations={iterations} precision={precision} />

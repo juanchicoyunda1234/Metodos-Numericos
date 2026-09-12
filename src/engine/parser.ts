@@ -52,3 +52,34 @@ export function parseExpression(latex: string): ParsedExpression {
 
   return { evaluate, evaluateDerivative }
 }
+
+export function sampleExpression(
+  expression: string,
+  xMin: number,
+  xMax: number,
+  steps = 240,
+  maxAbs?: number,
+): [number, number][] {
+  const { evaluate } = parseExpression(expression)
+  if (xMin === xMax) {
+    xMin -= 1
+    xMax += 1
+  }
+
+  const dx = (xMax - xMin) / steps
+  const points: [number, number][] = []
+
+  for (let i = 0; i <= steps; i++) {
+    const x = xMin + dx * i
+    try {
+      const y = evaluate(x)
+      if (!Number.isFinite(y)) continue
+      if (maxAbs !== undefined && Math.abs(y) > maxAbs) continue
+      points.push([x, y])
+    } catch {
+      continue
+    }
+  }
+
+  return points
+}

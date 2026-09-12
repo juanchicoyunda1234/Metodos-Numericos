@@ -21,6 +21,12 @@ export interface NumericalResult {
   equation?: string
   polynomial?: string
   message?: string
+  constantDerivative?: number
+  interpolationPoints?: Point[]
+  dividedDifferences?: number[][]
+  lagrangeTerms?: LagrangeTerm[]
+  xTarget?: number
+  monomialCoefficients?: number[]
 }
 
 export type MethodId =
@@ -33,4 +39,12 @@ export type MethodId =
 export interface Point {
   x: number
   y: number
+}
+
+export interface LagrangeTerm {
+  i: number
+  x: number
+  y: number
+  basis?: number
+  term?: number
 }

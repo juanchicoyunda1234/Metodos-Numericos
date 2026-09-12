@@ -1,6 +1,9 @@
-import type { NumericalResult } from '@/engine/types'
+import { useMemo } from 'react'
+
 import { ConvergenceChart } from '@/components/ConvergenceChart/ConvergenceChart'
+import { buildComparisonOption } from '@/components/ConvergenceChart/chartOptions'
 import { StatusBadge } from '@/components/ui/status-badge'
+import type { NumericalResult } from '@/engine/types'
 
 interface ComparisonViewProps {
   classic: NumericalResult | null
@@ -19,10 +22,25 @@ function formatNumber(value: number | null, precision: number) {
   return value.toFixed(precision)
 }
 
+function derivativeEvaluations(result: NumericalResult, kind: 'classic' | 'constant') {
+  if (kind === 'constant') return 1
+  if (result.status === 'ERROR_NUMERICO') return result.iterationData.length + 1
+  return result.iterationData.length
+}
+
 function ComparisonView({ classic, constant, precision }: ComparisonViewProps) {
-  const hasResults = classic && constant
+  const hasResults = Boolean(classic && constant)
+  const option = useMemo(
+    () => buildComparisonOption(classic, constant, precision),
+    [classic, constant, precision],
+  )
 
   const rows: Row[] = [
+    {
+      label: 'Valor final',
+      classic: formatNumber(classic?.finalValue ?? null, precision),
+      constant: formatNumber(constant?.finalValue ?? null, precision),
+    },
     {
       label: 'Iteraciones',
       classic: classic ? String(classic.iterations) : '—',
@@ -35,8 +53,8 @@ function ComparisonView({ classic, constant, precision }: ComparisonViewProps) {
     },
     {
       label: 'Evaluaciones de derivada',
-      classic: classic ? String(classic.iterations) : '—',
-      constant: constant ? '1' : '—',
+      classic: classic ? String(derivativeEvaluations(classic, 'classic')) : '—',
+      constant: constant ? String(derivativeEvaluations(constant, 'constant')) : '—',
     },
   ]
 
@@ -84,7 +102,25 @@ function ComparisonView({ classic, constant, precision }: ComparisonViewProps) {
         </table>
       </div>
 
-      <ConvergenceChart option={null} height={280} />
+      {(classic?.message || constant?.message) && (
+        <div className="flex flex-col gap-1">
+          {classic?.message && (
+            <p className="border border-border-strong bg-panel-alt px-3 py-2 text-sm text-text-muted">
+              Clásico: {classic.message}
+            </p>
+          )}
+          {constant?.message && (
+            <p className="border border-border-strong bg-panel-alt px-3 py-2 text-sm text-text-muted">
+              Constante: {constant.message}
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-2">
+        <div className="text-[11px] uppercase tracking-wide text-text-dim">Trayectorias superpuestas</div>
+        <ConvergenceChart option={option} height={440} />
+      </div>
     </div>
   )
 }
