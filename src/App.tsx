@@ -1,13 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 import type { InterpolationParams, RootFindingParams } from '@/components/ParamsForm/ParamsForm'
 import { ComparisonView } from '@/components/ComparisonView/ComparisonView'
 import { ConvergenceChart } from '@/components/ConvergenceChart/ConvergenceChart'
+import type { ConvergenceChartHandle } from '@/components/ConvergenceChart/ConvergenceChart'
 import { buildChartOption } from '@/components/ConvergenceChart/chartOptions'
 import { IterationTable } from '@/components/IterationTable/IterationTable'
 import { MathInput } from '@/components/MathInput/MathInput'
 import { MethodSelector } from '@/components/MethodSelector/MethodSelector'
 import { ParamsForm } from '@/components/ParamsForm/ParamsForm'
+import { PrintReport } from '@/components/PrintReport/PrintReport'
 import { ProcedureView } from '@/components/ProcedureView/ProcedureView'
 import { ResultSummary } from '@/components/ResultSummary/ResultSummary'
 import { Button } from '@/components/ui/button'
@@ -19,6 +21,7 @@ import { newtonRaphson } from '@/engine/newtonRaphson'
 import { newtonRaphsonConstante } from '@/engine/newtonRaphsonConstante'
 import { InvalidExpressionError } from '@/engine/parser'
 import type { MethodId, NumericalResult, Point } from '@/engine/types'
+import { exportIterationsCsv } from '@/lib/csv'
 
 const METHOD_TITLE: Record<MethodId, string> = {
   'newton-raphson': 'Newton-Raphson',
@@ -60,6 +63,8 @@ function App() {
   const [classicResult, setClassicResult] = useState<NumericalResult | null>(null)
   const [constantResult, setConstantResult] = useState<NumericalResult | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [printChartUrl, setPrintChartUrl] = useState<string | null>(null)
+  const chartRef = useRef<ConvergenceChartHandle>(null)
 
   const isInterpolation = selectedMethod === 'newton-interpolacion' || selectedMethod === 'lagrange'
   const isComparison = selectedMethod === 'comparacion'
@@ -169,8 +174,31 @@ function App() {
   )
   const chartHeight = isRootFinding ? 440 : 340
 
+  const paramsSummary = isRootFinding
+    ? [
+        { label: 'x₀', value: rootParams.x0 },
+        { label: 'Tolerancia ε', value: rootParams.tolerance },
+        { label: 'Máx. iteraciones', value: rootParams.maxIterations },
+      ]
+    : [
+        { label: 'Puntos', value: String(interpolationParams.points.length) },
+        { label: 'x a interpolar', value: interpolationParams.xTarget || '—' },
+      ]
+
+  const handleExportCsv = () => {
+    if (!activeResult) return
+    exportIterationsCsv(selectedMethod, activeResult, precision)
+  }
+
+  const handleExportPdf = () => {
+    if (!activeResult) return
+    setPrintChartUrl(chartRef.current?.getDataUrl() ?? null)
+    requestAnimationFrame(() => requestAnimationFrame(() => window.print()))
+  }
+
   return (
-    <div className="flex h-screen flex-col bg-bg text-text">
+    <>
+    <div className="flex h-screen flex-col bg-bg text-text print:hidden">
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-5">
         <div className="flex items-baseline gap-3">
           <span className="text-base font-semibold tracking-widest text-text">NUMERIA</span>
@@ -226,6 +254,16 @@ function App() {
               <Button type="button" onClick={handleExecute}>
                 Ejecutar
               </Button>
+              {!isComparison && activeResult && (
+                <>
+                  <Button type="button" variant="outline" onClick={handleExportCsv}>
+                    Exportar CSV
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handleExportPdf}>
+                    Exportar PDF
+                  </Button>
+                </>
+              )}
               {errorMessage && <span className="text-sm text-danger">{errorMessage}</span>}
             </div>
 
@@ -251,7 +289,7 @@ function App() {
                   />
                   <div className="flex flex-col gap-2">
                     <div className="text-[11px] uppercase tracking-wide text-text-dim">Gráfica</div>
-                    <ConvergenceChart option={chartOption} height={chartHeight} />
+                    <ConvergenceChart ref={chartRef} option={chartOption} height={chartHeight} />
                   </div>
                 </TabsContent>
 
@@ -264,6 +302,18 @@ function App() {
         </main>
       </div>
     </div>
+    {!isComparison && (
+      <PrintReport
+        methodTitle={METHOD_TITLE[selectedMethod]}
+        expression={isRootFinding ? expression : undefined}
+        paramsSummary={paramsSummary}
+        result={activeResult}
+        method={selectedMethod}
+        precision={precision}
+        chartDataUrl={printChartUrl}
+      />
+    )}
+    </>
   )
 }
 

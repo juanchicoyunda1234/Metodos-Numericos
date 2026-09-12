@@ -1,9 +1,13 @@
 import * as echarts from 'echarts'
-import { useEffect, useRef } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 
 interface ConvergenceChartProps {
   option: echarts.EChartsOption | null
   height?: number
+}
+
+interface ConvergenceChartHandle {
+  getDataUrl: () => string | null
 }
 
 const BASE_OPTION: echarts.EChartsOption = {
@@ -13,9 +17,16 @@ const BASE_OPTION: echarts.EChartsOption = {
   animationDuration: 250,
 }
 
-function ConvergenceChart({ option, height = 320 }: ConvergenceChartProps) {
+const ConvergenceChart = forwardRef<ConvergenceChartHandle, ConvergenceChartProps>(function ConvergenceChart(
+  { option, height = 320 },
+  ref,
+) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<echarts.ECharts | null>(null)
+
+  useImperativeHandle(ref, () => ({
+    getDataUrl: () => chartRef.current?.getDataURL({ pixelRatio: 2, backgroundColor: '#0a0d12' }) ?? null,
+  }))
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -51,6 +62,7 @@ function ConvergenceChart({ option, height = 320 }: ConvergenceChartProps) {
       )}
     </div>
   )
-}
+})
 
 export { ConvergenceChart }
+export type { ConvergenceChartHandle }
