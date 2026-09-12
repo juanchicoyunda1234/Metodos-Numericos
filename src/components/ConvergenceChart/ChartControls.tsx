@@ -23,7 +23,7 @@ function LayerToggle({ label, active, onClick }: { label: string; active: boolea
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        'h-7 rounded-[4px] px-2.5 text-xs font-medium transition-colors duration-150',
+        'min-h-11 cursor-pointer rounded-[4px] px-3 text-xs font-medium transition-colors duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] sm:h-7 sm:min-h-7 sm:px-2.5',
         active ? 'bg-accent-dim text-text' : 'text-text-muted hover:text-text',
       )}
     >
@@ -106,11 +106,16 @@ function ChartControls({
           type="button"
           variant="outline"
           size="icon-sm"
+          className="h-11 w-11 sm:h-7 sm:w-7"
           onClick={handleTogglePlay}
           disabled={iterationCount === 0}
           aria-label={isPlaying ? 'Pausar' : 'Reproducir'}
         >
-          {isPlaying ? <Pause /> : <Play />}
+          {isPlaying ? (
+            <Pause aria-hidden="true" />
+          ) : (
+            <Play aria-hidden="true" className="ml-px" />
+          )}
         </Button>
         <input
           type="range"

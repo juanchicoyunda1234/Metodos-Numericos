@@ -2,12 +2,10 @@ import { createColumnHelper, flexRender, getCoreRowModel, getFilteredRowModel, u
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 
-import { ResultingPolynomial } from '@/components/ResultSummary/ResultSummary'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { lagrangeBasisLatex } from '@/engine/lagrangeInterpolation'
-import { monomialLatex } from '@/engine/polynomial'
 import type { Iteration, LagrangeTerm, MethodId, Point } from '@/engine/types'
 import { cn } from '@/lib/utils'
 
@@ -26,7 +24,6 @@ interface IterationTableProps {
   precision: number
   dividedDifferences?: number[][]
   lagrangeTerms?: LagrangeTerm[]
-  monomialCoefficients?: number[]
   activeIteration?: number | null
   onIterationSelect?: (n: number) => void
 }
@@ -419,15 +416,9 @@ function IterationTable({
   precision,
   dividedDifferences,
   lagrangeTerms,
-  monomialCoefficients,
   activeIteration,
   onIterationSelect,
 }: IterationTableProps) {
-  const resulting =
-    monomialCoefficients && monomialCoefficients.length > 0 ? (
-      <ResultingPolynomial latex={monomialLatex(monomialCoefficients, precision)} />
-    ) : null
-
   if (method === 'newton-interpolacion') {
     return (
       <div className="flex flex-col gap-4">
@@ -443,7 +434,6 @@ function IterationTable({
             <TableEmpty message="Ejecuta el método para ver las diferencias divididas" />
           )}
         </div>
-        {resulting}
       </div>
     )
   }
@@ -463,7 +453,6 @@ function IterationTable({
             <TableEmpty message="Ejecuta el método para ver Lᵢ(x) y yᵢ·Lᵢ(x)" />
           )}
         </div>
-        {resulting}
       </div>
     )
   }

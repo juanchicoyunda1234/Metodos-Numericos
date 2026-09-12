@@ -80,7 +80,7 @@ const ConvergenceChart = forwardRef<ConvergenceChartHandle, ConvergenceChartProp
     <div className="relative rounded-box border border-border bg-panel">
       <div ref={containerRef} style={{ height }} className="w-full" />
       {!option && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-text-muted">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-text-muted text-pretty">
           Ejecuta el método para dibujar la curva y las iteraciones
         </div>
       )}

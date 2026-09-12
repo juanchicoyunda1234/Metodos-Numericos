@@ -49,8 +49,8 @@ function MethodSelector({ selected, onSelect }: MethodSelectorProps) {
                       onClick={() => onSelect(method.id)}
                       aria-current={active ? 'page' : undefined}
                       className={cn(
-                        'flex w-full items-center rounded-box px-3 py-2 text-left text-sm transition-colors duration-150',
-                        'hover:bg-panel-alt hover:text-text',
+                        'flex min-h-11 w-full cursor-pointer items-center rounded-box px-3 py-2 text-left text-sm transition-colors duration-150 ease-[cubic-bezier(0.23,1,0.32,1)]',
+                        '[@media(hover:hover)_and_(pointer:fine)]:hover:bg-panel-alt [@media(hover:hover)_and_(pointer:fine)]:hover:text-text',
                         active
                           ? 'bg-accent-dim font-medium text-text'
                           : 'text-text-muted',

@@ -97,6 +97,7 @@ function App() {
   const [classicResult, setClassicResult] = useState<NumericalResult | null>(null)
   const [constantResult, setConstantResult] = useState<NumericalResult | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const errorRef = useRef<HTMLDivElement>(null)
   const [printChartUrl, setPrintChartUrl] = useState<string | null>(null)
   const [activeIteration, setActiveIteration] = useState<number | null>(null)
   const [chartLayers, setChartLayers] = useState<ChartLayers>(DEFAULT_CHART_LAYERS)
@@ -109,6 +110,10 @@ function App() {
   useEffect(() => {
     applyTheme(theme)
   }, [theme])
+
+  useEffect(() => {
+    if (errorMessage) errorRef.current?.focus()
+  }, [errorMessage])
 
   const handleSelectMethod = (id: MethodId) => {
     if (isRootMethod(selectedMethod) && isRootMethod(id) && id !== selectedMethod) {
@@ -287,9 +292,16 @@ function App() {
         </>
       )}
       {errorMessage && (
-        <span role="alert" className="rounded-box border border-danger/35 bg-danger-dim px-3 py-1.5 text-sm text-danger">
-          {errorMessage}
-        </span>
+        <div
+          ref={errorRef}
+          id="workspace-error"
+          role="alert"
+          tabIndex={-1}
+          className="rounded-box border border-danger/35 bg-danger-dim px-3 py-1.5 text-sm text-danger outline-none focus-visible:ring-2 focus-visible:ring-danger"
+        >
+          <p className="font-medium">Hay un problema</p>
+          <p className="mt-0.5 opacity-90">{errorMessage}</p>
+        </div>
       )}
     </div>
   )
@@ -301,6 +313,7 @@ function App() {
       onRootParamsChange={setRootParams}
       interpolationParams={interpolationParams}
       onInterpolationParamsChange={setInterpolationParams}
+      errorMessage={errorMessage}
     />
   )
 
@@ -342,7 +355,6 @@ function App() {
           precision={precision}
           dividedDifferences={activeResult?.dividedDifferences}
           lagrangeTerms={activeResult?.lagrangeTerms}
-          monomialCoefficients={activeResult?.monomialCoefficients}
           activeIteration={isRootFinding ? activeIteration : null}
           onIterationSelect={isRootFinding ? setActiveIteration : undefined}
         />
@@ -362,7 +374,13 @@ function App() {
 
   return (
     <>
-      <div className="flex h-screen flex-col bg-bg text-text print:hidden">
+      <a
+        href="#workspace"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[70] focus:m-3 focus:rounded-box focus:bg-accent focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-on-accent"
+      >
+        Saltar al contenido
+      </a>
+      <div className="flex h-dvh flex-col bg-bg text-text print:hidden">
         <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-border bg-panel px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <BrandMark />
@@ -413,10 +431,12 @@ function App() {
             <MethodSelector selected={selectedMethod} onSelect={handleSelectMethod} />
           </aside>
 
-          <main className="@container min-w-0 flex-1 overflow-y-auto">
+          <main id="workspace" className="@container min-w-0 flex-1 overflow-y-auto scroll-mt-4">
             <div className="mx-auto flex max-w-[1400px] flex-col gap-7 px-4 py-7 sm:px-8">
               <div>
-                <h1 className="text-xl font-medium tracking-tight text-text">{METHOD_TITLE[selectedMethod]}</h1>
+                <h1 className="text-xl font-medium tracking-tight text-text text-balance">
+                  {METHOD_TITLE[selectedMethod]}
+                </h1>
                 <p className="mt-1.5 max-w-[65ch] text-sm leading-relaxed text-text-muted">
                   {METHOD_DESCRIPTION[selectedMethod]}
                 </p>

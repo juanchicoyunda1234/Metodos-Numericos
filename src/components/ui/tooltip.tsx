@@ -26,8 +26,9 @@ function Tooltip({
       <TooltipPrimitive.Portal>
         <TooltipPrimitive.Content
           sideOffset={6}
+          data-slot="tooltip-content"
           className={cn(
-            'z-50 max-w-xs rounded-box border border-border bg-panel px-2.5 py-1.5 text-xs leading-relaxed text-text shadow-[var(--shadow-float)]',
+            'z-50 max-w-xs origin-[var(--radix-tooltip-content-transform-origin)] rounded-box border border-border bg-panel px-2.5 py-1.5 text-xs leading-relaxed text-text shadow-[var(--shadow-float)]',
             className,
           )}
         >

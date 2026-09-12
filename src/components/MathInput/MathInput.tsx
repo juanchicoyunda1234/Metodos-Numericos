@@ -94,7 +94,8 @@ function MathInput({ value, onChange, placeholder, onSubmit }: MathInputProps) {
             type="button"
             variant="outline"
             size="sm"
-            className="h-7 min-w-8 px-2 font-mono-nums"
+            className="h-11 min-w-11 px-2 font-mono-nums sm:h-7 sm:min-w-8"
+            aria-label={`Insertar ${item.label}`}
             onClick={() => insert(item.latex)}
           >
             {item.label}
@@ -106,11 +107,14 @@ function MathInput({ value, onChange, placeholder, onSubmit }: MathInputProps) {
           ref={ref}
           placeholder={placeholder}
           aria-invalid={invalid || undefined}
+          aria-describedby={invalid && value.trim() !== '' ? 'math-error' : undefined}
           className={cn(invalid && 'text-danger')}
         />
       </div>
       {invalid && value.trim() !== '' && (
-        <p className="text-sm text-danger">Expresión matemática no válida. Revisa paréntesis y operadores.</p>
+        <p id="math-error" role="alert" className="text-sm text-danger">
+          Expresión matemática no válida. Revisa paréntesis y operadores.
+        </p>
       )}
     </div>
   )

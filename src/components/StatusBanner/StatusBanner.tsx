@@ -65,7 +65,7 @@ function StatusBanner({ result, method, precision }: StatusBannerProps) {
 
   return (
     <div className={cn('flex items-start gap-3 rounded-box border px-4 py-3', config.className)}>
-      <Icon className="mt-0.5 h-5 w-5 shrink-0" />
+      <Icon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="text-sm font-semibold">{config.label}</span>
         <span className="text-sm opacity-90">{message}</span>

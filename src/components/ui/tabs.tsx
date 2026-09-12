@@ -18,7 +18,7 @@ function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsPrimitiv
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        'border-b-2 border-transparent px-3 py-2 text-sm font-medium text-text-muted transition-colors duration-150 hover:text-text',
+        'min-h-11 cursor-pointer border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-text-muted transition-colors duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)]:hover:text-text sm:min-h-0 sm:py-2',
         'data-[state=active]:border-accent data-[state=active]:text-text',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-bg',
         className,

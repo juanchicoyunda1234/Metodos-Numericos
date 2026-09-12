@@ -18,8 +18,10 @@ function EmptyState({
         className,
       )}
     >
-      <p className="text-sm text-text">{title}</p>
-      {hint ? <p className="max-w-[65ch] text-sm leading-relaxed text-text-muted">{hint}</p> : null}
+      <p className="text-sm text-text text-pretty">{title}</p>
+      {hint ? (
+        <p className="max-w-[65ch] text-sm leading-relaxed text-text-muted text-pretty">{hint}</p>
+      ) : null}
     </div>
   )
 }

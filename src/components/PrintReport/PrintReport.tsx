@@ -162,7 +162,7 @@ function PrintReport({ methodTitle, expression, paramsSummary, result, method, p
     <div className="hidden print:block print:bg-white print:p-8 print:text-black">
       <header className="border-b border-gray-400 pb-2">
         <div className="text-sm font-semibold tracking-[0.18em]">NUMERIA</div>
-        <div className="text-xs text-gray-500">Informe de cálculo — generado {generatedAt}</div>
+        <div className="text-xs text-gray-500">Informe de cálculo - generado {generatedAt}</div>
       </header>
 
       <Section title="Método">
