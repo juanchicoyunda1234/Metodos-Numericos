@@ -1,0 +1,87 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Segoe UI', ui-sans-serif, system-ui, -apple-system, Helvetica, Arial, sans-serif;
+  --font-mono:
+    ui-monospace, 'Cascadia Code', 'Segoe UI Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --color-bg: #0a0d12;
+  --color-panel: #0f131a;
+  --color-panel-alt: #141922;
+  --color-border: #202836;
+  --color-border-strong: #2d3849;
+  --color-text: #e3e9f1;
+  --color-text-muted: #8994a6;
+  --color-text-dim: #576174;
+  --color-accent: #45b8e0;
+  --color-accent-strong: #6fd0f2;
+  --color-accent-dim: #1c3c49;
+  --color-success: #4fd68c;
+  --color-success-dim: #16332a;
+  --color-warning: #f0a53c;
+  --color-warning-dim: #3a2a15;
+  --color-danger: #f0645f;
+  --color-danger-dim: #3a1c1c;
+
+  --animate-pulse-slow: pulse 2.4s ease-in-out infinite;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-mono-nums {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: var(--color-accent-dim);
+  color: var(--color-accent-strong);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 0;
+}
+
+math-field {
+  --contains-highlight-background-color: var(--color-accent-dim);
+  --caret-color: var(--color-accent);
+  --hue: 195;
+  border: none;
+  background: transparent;
+  width: 100%;
+  font-size: 1.5rem;
+  color: var(--color-text);
+}
