@@ -1,6 +1,5 @@
 import { monomialLatex } from '@/engine/polynomial'
 import type { MethodId, NumericalResult } from '@/engine/types'
-import { StatusBadge } from '@/components/ui/status-badge'
 import { cn } from '@/lib/utils'
 
 interface ResultSummaryProps {
@@ -56,10 +55,6 @@ function ResultSummary({ result, precision, method }: ResultSummaryProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <StatusBadge status={result.status} />
-        <span className="font-mono-nums text-xs text-text-dim">{result.executionTime.toFixed(2)} ms</span>
-      </div>
       {isInterpolation ? (
         <>
           {polynomialLatex && <ResultingPolynomial latex={polynomialLatex} />}
@@ -94,11 +89,6 @@ function ResultSummary({ result, precision, method }: ResultSummaryProps) {
           <Metric label="Error" value={formatNumber(result.error, precision)} />
           <Metric label="Residuo |f(xₙ)|" value={formatNumber(result.residual, precision)} />
         </div>
-      )}
-      {result.message && (
-        <p className="border border-border-strong bg-panel-alt px-3 py-2 text-sm text-text-muted">
-          {result.message}
-        </p>
       )}
     </div>
   )

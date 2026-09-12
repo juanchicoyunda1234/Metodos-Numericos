@@ -14,6 +14,7 @@ import { ParamsForm } from '@/components/ParamsForm/ParamsForm'
 import { PrintReport } from '@/components/PrintReport/PrintReport'
 import { ProcedureView } from '@/components/ProcedureView/ProcedureView'
 import { ResultSummary } from '@/components/ResultSummary/ResultSummary'
+import { StatusBanner } from '@/components/StatusBanner/StatusBanner'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -290,6 +291,7 @@ function App() {
                 </TabsList>
 
                 <TabsContent value="resultado" className="flex flex-col gap-4 pt-4">
+                  {activeResult && <StatusBanner result={activeResult} method={selectedMethod} precision={precision} />}
                   <ResultSummary result={activeResult} precision={precision} method={selectedMethod} />
                   <IterationTable
                     method={selectedMethod}
