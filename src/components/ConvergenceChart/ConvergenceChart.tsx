@@ -17,7 +17,7 @@ interface ConvergenceChartHandle {
 
 const BASE_OPTION: echarts.EChartsOption = {
   backgroundColor: 'transparent',
-  textStyle: { color: '#8994a6', fontFamily: 'var(--font-mono)' },
+  textStyle: { fontFamily: 'IBM Plex Mono, ui-monospace, monospace' },
   grid: { left: 48, right: 24, top: 24, bottom: 32 },
   animationDuration: 250,
 }
@@ -77,11 +77,11 @@ const ConvergenceChart = forwardRef<ConvergenceChartHandle, ConvergenceChartProp
   }, [option])
 
   return (
-    <div className="relative rounded-box border border-border">
+    <div className="relative rounded-box border border-border bg-panel">
       <div ref={containerRef} style={{ height }} className="w-full" />
       {!option && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-text-dim">
-          Ejecuta el método para ver la gráfica
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-text-muted">
+          Ejecuta el método para dibujar la curva y las iteraciones
         </div>
       )}
     </div>

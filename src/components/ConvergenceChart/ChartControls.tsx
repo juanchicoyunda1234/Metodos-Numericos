@@ -18,9 +18,17 @@ interface ChartControlsProps {
 
 function LayerToggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
-    <Button type="button" variant={active ? 'default' : 'outline'} size="sm" onClick={onClick}>
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        'h-7 rounded-[4px] px-2.5 text-xs font-medium transition-colors duration-150',
+        active ? 'bg-accent-dim text-text' : 'text-text-muted hover:text-text',
+      )}
+    >
       {label}
-    </Button>
+    </button>
   )
 }
 
@@ -70,28 +78,30 @@ function ChartControls({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-4">
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
       <div className="flex items-center gap-2">
-        <span className="text-[11px] uppercase tracking-wide text-text-dim">Capas</span>
-        <LayerToggle
-          label="Iteraciones"
-          active={layers.iterations}
-          onClick={() => onLayersChange({ ...layers, iterations: !layers.iterations })}
-        />
-        <LayerToggle
-          label="Tangentes"
-          active={layers.tangents}
-          onClick={() => onLayersChange({ ...layers, tangents: !layers.tangents })}
-        />
-        <LayerToggle
-          label="Trayectoria"
-          active={layers.trajectory}
-          onClick={() => onLayersChange({ ...layers, trajectory: !layers.trajectory })}
-        />
+        <span className="text-[13px] text-text-muted">Capas</span>
+        <div className="inline-flex items-center gap-0.5 rounded-box border border-border bg-panel-alt p-0.5">
+          <LayerToggle
+            label="Iteraciones"
+            active={layers.iterations}
+            onClick={() => onLayersChange({ ...layers, iterations: !layers.iterations })}
+          />
+          <LayerToggle
+            label="Tangentes"
+            active={layers.tangents}
+            onClick={() => onLayersChange({ ...layers, tangents: !layers.tangents })}
+          />
+          <LayerToggle
+            label="Trayectoria"
+            active={layers.trajectory}
+            onClick={() => onLayersChange({ ...layers, trajectory: !layers.trajectory })}
+          />
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="text-[11px] uppercase tracking-wide text-text-dim">Reproducción</span>
+        <span className="text-[13px] text-text-muted">Reproducción</span>
         <Button
           type="button"
           variant="outline"

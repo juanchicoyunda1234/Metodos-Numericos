@@ -12,7 +12,7 @@ function SelectTrigger({ className, children, ...props }: ComponentProps<typeof 
     <SelectPrimitive.Trigger
       className={cn(
         'flex h-8 items-center justify-between gap-2 rounded-box border border-border bg-panel-alt px-2.5 text-sm text-text',
-        'focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent data-[placeholder]:text-text-dim',
+        'transition-colors duration-150 focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent data-[placeholder]:text-text-dim',
         className,
       )}
       {...props}
@@ -29,7 +29,10 @@ function SelectContent({ className, children, ...props }: ComponentProps<typeof 
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
-        className={cn('z-50 rounded-box border border-border-strong bg-panel shadow-lg', className)}
+        className={cn(
+          'z-50 rounded-box border border-border-strong bg-panel shadow-[var(--shadow-float)]',
+          className,
+        )}
         position="popper"
         sideOffset={4}
         {...props}
@@ -45,13 +48,13 @@ function SelectItem({ className, children, ...props }: ComponentProps<typeof Sel
     <SelectPrimitive.Item
       className={cn(
         'relative flex cursor-pointer select-none items-center py-1.5 pl-7 pr-3 text-sm text-text outline-none',
-        'data-[highlighted]:bg-panel-alt data-[highlighted]:text-accent-strong',
+        'data-[highlighted]:bg-accent-dim data-[highlighted]:text-text',
         className,
       )}
       {...props}
     >
       <SelectPrimitive.ItemIndicator className="absolute left-2 flex items-center">
-        <Check className="h-3.5 w-3.5" />
+        <Check className="h-3.5 w-3.5 text-accent" />
       </SelectPrimitive.ItemIndicator>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
     </SelectPrimitive.Item>

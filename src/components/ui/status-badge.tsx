@@ -9,10 +9,10 @@ const STATUS_LABEL: Record<ResultStatus, string> = {
 }
 
 const STATUS_STYLE: Record<ResultStatus, string> = {
-  CONVERGIO: 'bg-success-dim text-success border-success/40',
-  NO_CONVERGIO: 'bg-warning-dim text-warning border-warning/40',
-  ERROR_NUMERICO: 'bg-danger-dim text-danger border-danger/40',
-  DIVERGIO: 'bg-danger-dim text-danger border-danger/40',
+  CONVERGIO: 'bg-success-dim text-success border-success/35',
+  NO_CONVERGIO: 'bg-warning-dim text-warning border-warning/35',
+  ERROR_NUMERICO: 'bg-danger-dim text-danger border-danger/35',
+  DIVERGIO: 'bg-danger-dim text-danger border-danger/35',
 }
 
 interface StatusBadgeProps {
@@ -24,7 +24,7 @@ function StatusBadge({ status, className }: StatusBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-box border px-2.5 py-1 text-xs font-medium uppercase tracking-wide',
+        'inline-flex items-center gap-1.5 rounded-box border px-2.5 py-1 text-xs font-medium',
         STATUS_STYLE[status],
         className,
       )}

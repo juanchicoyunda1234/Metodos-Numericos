@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 
 import { ResultingPolynomial } from '@/components/ResultSummary/ResultSummary'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   lagrangeBasisAtLatex,
   lagrangeBasisLatex,
@@ -74,18 +75,18 @@ function TimelineNode({
     <div
       onClick={onClick}
       className={cn(
-        'relative flex flex-col gap-1 border-l-2 py-3 pl-6',
+        'relative flex flex-col gap-1 border-l py-3 pl-6',
         isLast ? 'border-transparent' : 'border-border',
         onClick && 'cursor-pointer hover:bg-panel-alt',
       )}
     >
       <span
         className={cn(
-          'absolute -left-[7px] top-4 h-3 w-3 rounded-full border-2 border-bg',
-          active ? 'bg-accent' : 'bg-text-dim',
+          'absolute -left-[5px] top-4 h-2.5 w-2.5 rounded-full border-2 border-bg',
+          active ? 'bg-accent' : 'bg-border-strong',
         )}
       />
-      <div className={cn('text-[11px] uppercase tracking-wide', active ? 'text-accent-strong' : 'text-text-dim')}>
+      <div className={cn('text-[13px] font-medium', active ? 'text-text' : 'text-text-dim')}>
         {label}
       </div>
       {children}
@@ -97,10 +98,10 @@ const MANY_ITERATIONS = 10
 const EDGE_COUNT = 5
 
 function statusTimelineLabel(status: NumericalResult['status']) {
-  if (status === 'CONVERGIO') return 'CONVERGENCIA'
-  if (status === 'NO_CONVERGIO') return 'NO CONVERGIÓ'
-  if (status === 'DIVERGIO') return 'DIVERGIÓ'
-  return 'ERROR NUMÉRICO'
+  if (status === 'CONVERGIO') return 'Convergencia'
+  if (status === 'NO_CONVERGIO') return 'No convergió'
+  if (status === 'DIVERGIO') return 'Divergió'
+  return 'Error numérico'
 }
 
 function RootFindingTimeline({
@@ -125,9 +126,11 @@ function RootFindingTimeline({
 
   if (iterations.length === 0) {
     return (
-      <div className="flex h-24 items-center justify-center border border-dashed border-border text-sm text-text-dim">
-        Ejecuta el método para ver el procedimiento paso a paso
-      </div>
+      <EmptyState
+        title="Todavía no hay un procedimiento"
+        hint="Ejecuta el método para ver cada iteración con la fórmula sustituida."
+        className="py-5"
+      />
     )
   }
 
@@ -162,7 +165,7 @@ function RootFindingTimeline({
       {firstIterations.map(renderIterationNode)}
 
       {truncated && (
-        <div className="border-l-2 border-border py-2 pl-6">
+        <div className="border-l border-border py-2 pl-6">
           <Button type="button" variant="outline" size="sm" onClick={() => setShowAll(true)}>
             Mostrar todas las iteraciones ({hiddenCount} ocultas)
           </Button>
@@ -238,14 +241,14 @@ function NewtonInterpolationProcedure({
         </div>
       ))}
       <div className="border border-border px-4 py-3">
-        <div className="mb-1 text-[11px] uppercase tracking-wide text-text-dim">Polinomio de Newton</div>
+        <div className="mb-1 text-[13px] font-medium text-text-muted">Polinomio de Newton</div>
         <math-field key={polynomial} read-only className="block">
           {polynomial}
         </math-field>
       </div>
       {evaluation && (
         <div className="border border-border px-4 py-3">
-          <div className="mb-1 text-[11px] uppercase tracking-wide text-text-dim">Evaluación</div>
+          <div className="mb-1 text-[13px] font-medium text-text-muted">Evaluación</div>
           <math-field key={evaluation} read-only className="block">
             {evaluation}
           </math-field>
@@ -293,7 +296,7 @@ function LagrangeInterpolationProcedure({
             : null
         return (
           <div key={term.i} className="flex flex-col gap-2 border border-border px-4 py-3">
-            <div className="text-[11px] uppercase tracking-wide text-text-dim">i = {term.i}</div>
+            <div className="text-[13px] font-medium text-text-muted">i = {term.i}</div>
             <math-field key={basis} read-only className="block">
               {basis}
             </math-field>
@@ -311,14 +314,14 @@ function LagrangeInterpolationProcedure({
         )
       })}
       <div className="border border-border px-4 py-3">
-        <div className="mb-1 text-[11px] uppercase tracking-wide text-text-dim">Polinomio de Lagrange</div>
+        <div className="mb-1 text-[13px] font-medium text-text-muted">Polinomio de Lagrange</div>
         <math-field key={polynomial} read-only className="block">
           {polynomial}
         </math-field>
       </div>
       {evaluation && (
         <div className="border border-border px-4 py-3">
-          <div className="mb-1 text-[11px] uppercase tracking-wide text-text-dim">Evaluación</div>
+          <div className="mb-1 text-[13px] font-medium text-text-muted">Evaluación</div>
           <math-field key={evaluation} read-only className="block">
             {evaluation}
           </math-field>
@@ -345,7 +348,7 @@ function ProcedureView({ method, precision, result, activeIteration = null, onIt
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-box border border-border-strong bg-panel-alt px-4 py-3">
-        <div className="mb-1.5 text-[11px] uppercase tracking-wide text-text-dim">Fórmula general</div>
+        <div className="mb-1.5 text-sm font-medium text-text">Fórmula general</div>
         <math-field key={GENERAL_FORMULA[method]} read-only className="block">
           {GENERAL_FORMULA[method]}
         </math-field>
@@ -353,7 +356,7 @@ function ProcedureView({ method, precision, result, activeIteration = null, onIt
 
       {dLatex && (
         <div className="border border-border px-4 py-3">
-          <div className="mb-1 text-[11px] uppercase tracking-wide text-text-dim">Derivada constante</div>
+          <div className="mb-1 text-[13px] font-medium text-text-muted">Derivada constante</div>
           <math-field key={dLatex} read-only className="block">
             {dLatex}
           </math-field>
@@ -371,9 +374,11 @@ function ProcedureView({ method, precision, result, activeIteration = null, onIt
             onIterationSelect={onIterationSelect}
           />
         ) : constantDerivative === undefined ? (
-          <div className="flex h-24 items-center justify-center border border-dashed border-border text-sm text-text-dim">
-            Ejecuta el método para ver el procedimiento paso a paso
-          </div>
+          <EmptyState
+            title="Todavía no hay un procedimiento"
+            hint="Ejecuta el método para ver cada paso con la fórmula sustituida."
+            className="py-5"
+          />
         ) : null)}
 
       {isNewtonInterpolation &&
@@ -387,9 +392,11 @@ function ProcedureView({ method, precision, result, activeIteration = null, onIt
             monomialCoefficients={result.monomialCoefficients}
           />
         ) : result ? null : (
-          <div className="flex h-24 items-center justify-center border border-dashed border-border text-sm text-text-dim">
-            Ejecuta el método para ver el procedimiento paso a paso
-          </div>
+          <EmptyState
+            title="Todavía no hay un procedimiento"
+            hint="Ejecuta el método para ver cada paso con la fórmula sustituida."
+            className="py-5"
+          />
         ))}
 
       {isLagrange &&
@@ -403,9 +410,11 @@ function ProcedureView({ method, precision, result, activeIteration = null, onIt
             monomialCoefficients={result.monomialCoefficients}
           />
         ) : result ? null : (
-          <div className="flex h-24 items-center justify-center border border-dashed border-border text-sm text-text-dim">
-            Ejecuta el método para ver el procedimiento paso a paso
-          </div>
+          <EmptyState
+            title="Todavía no hay un procedimiento"
+            hint="Ejecuta el método para ver cada paso con la fórmula sustituida."
+            className="py-5"
+          />
         ))}
     </div>
   )

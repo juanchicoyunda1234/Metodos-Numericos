@@ -17,6 +17,7 @@ import { ProcedureView } from '@/components/ProcedureView/ProcedureView'
 import { ResultSummary } from '@/components/ResultSummary/ResultSummary'
 import { StatusBanner } from '@/components/StatusBanner/StatusBanner'
 import { ThemeToggle } from '@/components/ThemeToggle/ThemeToggle'
+import { BrandMark } from '@/components/BrandMark/BrandMark'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -56,8 +57,21 @@ function isInterpolationMethod(id: MethodId) {
   return id === 'newton-interpolacion' || id === 'lagrange'
 }
 
-function Panel({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <section className={`rounded-box border border-border bg-panel p-4 ${className}`}>{children}</section>
+function Panel({
+  title,
+  children,
+  className = '',
+}: {
+  title?: string
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <section className={`rounded-box border border-border bg-panel p-4 ${className}`}>
+      {title ? <h2 className="mb-3 text-sm font-medium text-text">{title}</h2> : null}
+      {children}
+    </section>
+  )
 }
 
 function App() {
@@ -257,6 +271,11 @@ function App() {
       <Button type="button" onClick={handleExecute}>
         Ejecutar
       </Button>
+      <span className="hidden text-xs text-text-dim sm:inline">
+        <kbd>Ctrl</kbd>
+        <span className="mx-1">+</span>
+        <kbd>Enter</kbd>
+      </span>
       {!isComparison && activeResult && (
         <>
           <Button type="button" variant="outline" onClick={handleExportCsv}>
@@ -268,7 +287,7 @@ function App() {
         </>
       )}
       {errorMessage && (
-        <span role="alert" className="text-sm text-danger">
+        <span role="alert" className="rounded-box border border-danger/35 bg-danger-dim px-3 py-1.5 text-sm text-danger">
           {errorMessage}
         </span>
       )}
@@ -286,8 +305,8 @@ function App() {
   )
 
   const chartPanel = (
-    <div className="flex flex-col gap-2 @min-[960px]:sticky @min-[960px]:top-4">
-      <div className="text-[11px] uppercase tracking-wide text-text-dim">Gráfica</div>
+    <div className="flex flex-col gap-3 @min-[960px]:sticky @min-[960px]:top-4">
+      <h2 className="text-sm font-medium text-text">Gráfica</h2>
       {isRootFinding && (
         <ChartControls
           layers={chartLayers}
@@ -344,21 +363,26 @@ function App() {
   return (
     <>
       <div className="flex h-screen flex-col bg-bg text-text print:hidden">
-        <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border px-4 sm:px-5">
-          <div className="flex items-baseline gap-3">
-            <span className="text-base font-semibold tracking-widest text-text">NUMERIA</span>
-            <span className="hidden text-xs text-text-dim sm:inline">Laboratorio de métodos numéricos</span>
+        <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-border bg-panel px-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <BrandMark />
+            <div className="flex flex-col justify-center leading-none">
+              <span className="text-[13px] font-semibold tracking-[0.18em] text-text">NUMERIA</span>
+              <span className="mt-1 hidden text-[11px] text-text-muted sm:block">
+                Laboratorio de métodos numéricos
+              </span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs uppercase tracking-wide text-text-dim">Precisión</span>
+            <span className="hidden text-[13px] text-text-muted sm:inline">Precisión</span>
             <Select value={String(precision)} onValueChange={(v) => setPrecision(Number(v))}>
-              <SelectTrigger className="w-20">
+              <SelectTrigger className="w-16 font-mono-nums" aria-label="Precisión decimal">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {PRECISION_OPTIONS.map((p) => (
                   <SelectItem key={p} value={String(p)}>
-                    {p} decimales
+                    {p}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -367,9 +391,9 @@ function App() {
           </div>
         </header>
 
-        <div className="md:hidden border-b border-border px-4 py-2">
+        <div className="border-b border-border bg-panel px-4 py-2 md:hidden">
           <Select value={selectedMethod} onValueChange={(v) => handleSelectMethod(v as MethodId)}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full" aria-label="Método">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -385,24 +409,25 @@ function App() {
         </div>
 
         <div className="flex min-h-0 flex-1">
-          <aside className="hidden w-64 shrink-0 border-r border-border md:block">
+          <aside className="hidden w-64 shrink-0 border-r border-border bg-panel md:block">
             <MethodSelector selected={selectedMethod} onSelect={handleSelectMethod} />
           </aside>
 
           <main className="@container min-w-0 flex-1 overflow-y-auto">
-            <div className="mx-auto flex max-w-[1400px] flex-col gap-6 px-4 py-6 sm:px-8">
+            <div className="mx-auto flex max-w-[1400px] flex-col gap-7 px-4 py-7 sm:px-8">
               <div>
-                <h1 className="text-xl font-semibold text-text">{METHOD_TITLE[selectedMethod]}</h1>
-                <p className="mt-1 max-w-3xl text-sm text-text-muted">{METHOD_DESCRIPTION[selectedMethod]}</p>
+                <h1 className="text-xl font-medium tracking-tight text-text">{METHOD_TITLE[selectedMethod]}</h1>
+                <p className="mt-1.5 max-w-[65ch] text-sm leading-relaxed text-text-muted">
+                  {METHOD_DESCRIPTION[selectedMethod]}
+                </p>
               </div>
 
               {isComparison && (
                 <>
-                  <Panel>
-                    <div className="mb-2 text-[11px] uppercase tracking-wide text-text-dim">f(x)</div>
+                  <Panel title="f(x)">
                     <MathInput value={expression} onChange={setExpression} placeholder="x^3-x-2" onSubmit={handleExecute} />
                   </Panel>
-                  <Panel>{paramsForm}</Panel>
+                  <Panel title="Parámetros">{paramsForm}</Panel>
                   {actionRow}
                   <ComparisonView
                     classic={classicResult}
@@ -415,13 +440,12 @@ function App() {
 
               {isRootFinding && (
                 <>
-                  <div className="grid grid-cols-1 gap-6 @min-[960px]:grid-cols-2 @min-[960px]:items-start">
+                  <div className="grid grid-cols-1 gap-8 @min-[960px]:grid-cols-2 @min-[960px]:items-start">
                     <div className="flex flex-col gap-4">
-                      <Panel>
-                        <div className="mb-2 text-[11px] uppercase tracking-wide text-text-dim">f(x)</div>
+                      <Panel title="f(x)">
                         <MathInput value={expression} onChange={setExpression} placeholder="x^3-x-2" onSubmit={handleExecute} />
                       </Panel>
-                      <Panel>{paramsForm}</Panel>
+                      <Panel title="Parámetros">{paramsForm}</Panel>
                       {actionRow}
                     </div>
                     {chartPanel}
@@ -433,7 +457,7 @@ function App() {
 
               {isInterpolation && (
                 <>
-                  <div className="grid grid-cols-1 gap-6 @min-[960px]:grid-cols-2 @min-[960px]:items-start">
+                  <div className="grid grid-cols-1 gap-8 @min-[960px]:grid-cols-2 @min-[960px]:items-start">
                     <div className="flex flex-col gap-4">
                       <Panel>{paramsForm}</Panel>
                       {actionRow}

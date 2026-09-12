@@ -34,17 +34,12 @@ interface MethodSelectorProps {
 
 function MethodSelector({ selected, onSelect }: MethodSelectorProps) {
   return (
-    <nav className="flex h-full flex-col overflow-y-auto py-4">
-      <div className="px-4 pb-3 text-xs font-semibold uppercase tracking-widest text-text-dim">
-        Métodos
-      </div>
-      <div className="flex flex-col gap-4">
+    <nav aria-label="Métodos" className="flex h-full flex-col overflow-y-auto py-5">
+      <div className="flex flex-col gap-6">
         {METHOD_GROUPS.map((group) => (
           <div key={group.label}>
-            <div className="px-4 pb-1.5 text-[11px] font-medium uppercase tracking-wide text-text-muted">
-              ▸ {group.label}
-            </div>
-            <ul>
+            <div className="px-4 pb-2 text-xs font-medium text-text-dim">{group.label}</div>
+            <ul className="flex flex-col gap-0.5 px-2">
               {group.methods.map((method) => {
                 const active = method.id === selected
                 return (
@@ -52,11 +47,13 @@ function MethodSelector({ selected, onSelect }: MethodSelectorProps) {
                     <button
                       type="button"
                       onClick={() => onSelect(method.id)}
-                      aria-current={active}
+                      aria-current={active ? 'page' : undefined}
                       className={cn(
-                        'flex w-full items-center border-l-2 border-transparent px-4 py-1.5 text-left text-sm text-text-muted transition-colors',
+                        'flex w-full items-center rounded-box px-3 py-2 text-left text-sm transition-colors duration-150',
                         'hover:bg-panel-alt hover:text-text',
-                        active && 'border-accent bg-panel-alt text-accent-strong',
+                        active
+                          ? 'bg-accent-dim font-medium text-text'
+                          : 'text-text-muted',
                       )}
                     >
                       {method.label}

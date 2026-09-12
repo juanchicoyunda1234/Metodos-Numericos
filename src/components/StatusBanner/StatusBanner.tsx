@@ -14,22 +14,22 @@ const STATUS_CONFIG: Record<ResultStatus, { label: string; icon: LucideIcon; cla
   CONVERGIO: {
     label: 'Convergió',
     icon: CheckCircle2,
-    className: 'border-success/40 bg-success-dim text-success',
+    className: 'border-success/35 bg-success-dim text-success',
   },
   NO_CONVERGIO: {
     label: 'No convergió',
     icon: AlertTriangle,
-    className: 'border-warning/40 bg-warning-dim text-warning',
+    className: 'border-warning/35 bg-warning-dim text-warning',
   },
   ERROR_NUMERICO: {
     label: 'Error numérico',
     icon: XCircle,
-    className: 'border-danger/40 bg-danger-dim text-danger',
+    className: 'border-danger/35 bg-danger-dim text-danger',
   },
   DIVERGIO: {
     label: 'Divergió',
     icon: TrendingUp,
-    className: 'border-danger/40 bg-danger-dim text-danger',
+    className: 'border-danger/35 bg-danger-dim text-danger',
   },
 }
 
@@ -66,11 +66,13 @@ function StatusBanner({ result, method, precision }: StatusBannerProps) {
   return (
     <div className={cn('flex items-start gap-3 rounded-box border px-4 py-3', config.className)}>
       <Icon className="mt-0.5 h-5 w-5 shrink-0" />
-      <div className="flex flex-col gap-0.5">
-        <span className="text-sm font-semibold uppercase tracking-wide">{config.label}</span>
-        <span className="text-sm text-text">{message}</span>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-sm font-semibold">{config.label}</span>
+        <span className="text-sm opacity-90">{message}</span>
       </div>
-      <span className="ml-auto shrink-0 font-mono-nums text-xs text-text-dim">{result.executionTime.toFixed(2)} ms</span>
+      <span className="ml-auto shrink-0 font-mono-nums text-xs opacity-80">
+        {result.executionTime.toFixed(2)} ms
+      </span>
     </div>
   )
 }

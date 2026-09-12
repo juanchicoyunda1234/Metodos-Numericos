@@ -1,9 +1,10 @@
 @import 'tailwindcss';
 
 @theme {
-  --font-sans: 'Segoe UI', ui-sans-serif, system-ui, -apple-system, Helvetica, Arial, sans-serif;
+  --font-sans: 'IBM Plex Sans', 'Avenir Next', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
   --font-mono:
-    ui-monospace, 'Cascadia Code', 'Segoe UI Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+    'IBM Plex Mono', ui-monospace, 'Cascadia Code', 'Segoe UI Mono', 'SFMono-Regular', Menlo, Consolas,
+    monospace;
 
   --color-bg: var(--n-bg);
   --color-panel: var(--n-panel);
@@ -26,6 +27,8 @@
   --color-on-danger: var(--n-on-danger);
 
   --radius-box: 5px;
+
+  --shadow-float: var(--n-shadow-float);
 
   --animate-pulse-slow: pulse 2.4s ease-in-out infinite;
 }
@@ -52,6 +55,7 @@
   --n-danger: #f0645f;
   --n-danger-dim: #3a1c1c;
   --n-on-danger: #1a0605;
+  --n-shadow-float: 0 16px 40px -16px rgb(4 8 14 / 0.72);
 }
 
 [data-theme='light'] {
@@ -75,6 +79,7 @@
   --n-danger: #b42318;
   --n-danger-dim: #f8d5d2;
   --n-on-danger: #fff6f5;
+  --n-shadow-float: 0 16px 40px -18px rgb(24 36 48 / 0.22);
 }
 
 * {
@@ -92,6 +97,8 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.5;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -101,6 +108,19 @@ body {
 .font-mono-nums {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+kbd,
+.kbd {
+  display: inline-block;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 4px;
+  padding: 0.05rem 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
 }
 
 ::selection {
@@ -122,9 +142,29 @@ body {
   border-radius: var(--radius-box);
 }
 
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-dim);
+}
+
+.math-well {
+  display: flex;
+  min-height: 3.25rem;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-box);
+  background: var(--color-panel-alt);
+  padding: 0.4rem 0.75rem;
+}
+
+.math-well:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
 math-field {
   --contains-highlight-background-color: var(--color-accent-dim);
   --caret-color: var(--color-accent);
+  --placeholder-color: var(--color-text-dim);
   --hue: 195;
   border: none;
   background: transparent;
@@ -134,7 +174,7 @@ math-field {
 }
 
 math-field.resulting-polynomial {
-  font-size: 1.85rem;
+  font-size: 1.75rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

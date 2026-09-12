@@ -101,13 +101,17 @@ function MathInput({ value, onChange, placeholder, onSubmit }: MathInputProps) {
           </Button>
         ))}
       </div>
-      <math-field
-        ref={ref}
-        placeholder={placeholder}
-        aria-invalid={invalid || undefined}
-        className={cn(invalid && 'text-danger')}
-      />
-      {invalid && value.trim() !== '' && <p className="text-sm text-danger">Expresión matemática no válida</p>}
+      <div className={cn('math-well', invalid && 'border-danger')}>
+        <math-field
+          ref={ref}
+          placeholder={placeholder}
+          aria-invalid={invalid || undefined}
+          className={cn(invalid && 'text-danger')}
+        />
+      </div>
+      {invalid && value.trim() !== '' && (
+        <p className="text-sm text-danger">Expresión matemática no válida. Revisa paréntesis y operadores.</p>
+      )}
     </div>
   )
 }

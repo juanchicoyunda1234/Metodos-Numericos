@@ -27,7 +27,7 @@ function formatNumber(value: number | null | undefined, precision: number) {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mt-4 break-inside-avoid">
-      <h2 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">{title}</h2>
+      <h2 className="mb-1.5 text-xs font-semibold text-gray-600">{title}</h2>
       {children}
     </section>
   )
@@ -161,7 +161,7 @@ function PrintReport({ methodTitle, expression, paramsSummary, result, method, p
   return (
     <div className="hidden print:block print:bg-white print:p-8 print:text-black">
       <header className="border-b border-gray-400 pb-2">
-        <div className="text-sm font-semibold tracking-widest">NUMERIA</div>
+        <div className="text-sm font-semibold tracking-[0.18em]">NUMERIA</div>
         <div className="text-xs text-gray-500">Informe de cálculo — generado {generatedAt}</div>
       </header>
 

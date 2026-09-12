@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 
 import { ResultingPolynomial } from '@/components/ResultSummary/ResultSummary'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { lagrangeBasisLatex } from '@/engine/lagrangeInterpolation'
 import { monomialLatex } from '@/engine/polynomial'
@@ -30,12 +31,8 @@ interface IterationTableProps {
   onIterationSelect?: (n: number) => void
 }
 
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="flex h-24 items-center justify-center rounded-box border border-dashed border-border text-sm text-text-dim">
-      {message}
-    </div>
-  )
+function TableEmpty({ message }: { message: string }) {
+  return <EmptyState title={message} className="py-5" />
 }
 
 function TableShell({ children }: { children: ReactNode }) {
@@ -99,7 +96,7 @@ function NewtonIterationTable({
   })
 
   if (iterations.length === 0) {
-    return <EmptyState message="Sin iteraciones todavía" />
+    return <TableEmpty message="Sin iteraciones todavía" />
   }
 
   return (
@@ -117,7 +114,7 @@ function NewtonIterationTable({
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="whitespace-nowrap px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wide text-text-muted"
+                  className="whitespace-nowrap px-3 py-2 text-left text-[13px] font-medium text-text-muted"
                 >
                   {flexRender(header.column.columnDef.header, header.getContext())}
                 </th>
@@ -178,7 +175,7 @@ function InterpolationPointsTable({ points, precision }: { points: Point[]; prec
   const table = useReactTable({ data, columns, getCoreRowModel: getCoreRowModel() })
 
   if (points.length === 0) {
-    return <EmptyState message="Agrega puntos para ver la tabla" />
+    return <TableEmpty message="Agrega puntos para ver la tabla" />
   }
 
   return (
@@ -189,7 +186,7 @@ function InterpolationPointsTable({ points, precision }: { points: Point[]; prec
             {headerGroup.headers.map((header) => (
               <th
                 key={header.id}
-                className="whitespace-nowrap px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wide text-text-muted"
+                className="whitespace-nowrap px-3 py-2 text-left text-[13px] font-medium text-text-muted"
               >
                 {flexRender(header.column.columnDef.header, header.getContext())}
               </th>
@@ -259,7 +256,7 @@ function DividedDifferenceTable({
   const reactTable = useReactTable({ data, columns, getCoreRowModel: getCoreRowModel() })
 
   if (points.length === 0 || maxOrder === 0) {
-    return <EmptyState message="Ejecuta el método para ver las diferencias divididas" />
+    return <TableEmpty message="Ejecuta el método para ver las diferencias divididas" />
   }
 
   return (
@@ -270,7 +267,7 @@ function DividedDifferenceTable({
             {headerGroup.headers.map((header) => (
               <th
                 key={header.id}
-                className="whitespace-nowrap px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wide text-text-muted"
+                className="whitespace-nowrap px-3 py-2 text-left text-[13px] font-medium text-text-muted"
               >
                 {flexRender(header.column.columnDef.header, header.getContext())}
               </th>
@@ -364,7 +361,7 @@ function LagrangeTermsTable({
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="whitespace-nowrap px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wide text-text-muted"
+                  className="whitespace-nowrap px-3 py-2 text-left text-[13px] font-medium text-text-muted"
                 >
                   {flexRender(header.column.columnDef.header, header.getContext())}
                 </th>
@@ -386,7 +383,7 @@ function LagrangeTermsTable({
         {evaluated && (
           <tfoot>
             <tr className="border-t border-border-strong bg-panel-alt">
-              <td colSpan={4} className="px-3 py-1.5 text-[11px] uppercase tracking-wide text-text-muted">
+              <td colSpan={4} className="px-3 py-1.5 text-[13px] text-text-muted">
                 P(x)
               </td>
               <td className="whitespace-nowrap px-3 py-1.5 font-mono-nums text-accent-strong">
@@ -435,15 +432,15 @@ function IterationTable({
     return (
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <div className="text-[11px] uppercase tracking-wide text-text-dim">Datos originales</div>
+          <h3 className="text-sm font-medium text-text">Datos originales</h3>
           <InterpolationPointsTable points={points} precision={precision} />
         </div>
         <div className="flex flex-col gap-2">
-          <div className="text-[11px] uppercase tracking-wide text-text-dim">Diferencias divididas</div>
+          <h3 className="text-sm font-medium text-text">Diferencias divididas</h3>
           {dividedDifferences ? (
             <DividedDifferenceTable points={points} table={dividedDifferences} precision={precision} />
           ) : (
-            <EmptyState message="Ejecuta el método para ver las diferencias divididas" />
+            <TableEmpty message="Ejecuta el método para ver las diferencias divididas" />
           )}
         </div>
         {resulting}
@@ -455,15 +452,15 @@ function IterationTable({
     return (
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <div className="text-[11px] uppercase tracking-wide text-text-dim">Datos originales</div>
+          <h3 className="text-sm font-medium text-text">Datos originales</h3>
           <InterpolationPointsTable points={points} precision={precision} />
         </div>
         <div className="flex flex-col gap-2">
-          <div className="text-[11px] uppercase tracking-wide text-text-dim">Polinomios base Lᵢ(x)</div>
+          <h3 className="text-sm font-medium text-text">Polinomios base Lᵢ(x)</h3>
           {lagrangeTerms ? (
             <LagrangeTermsTable terms={lagrangeTerms} points={points} precision={precision} />
           ) : (
-            <EmptyState message="Ejecuta el método para ver Lᵢ(x) y yᵢ·Lᵢ(x)" />
+            <TableEmpty message="Ejecuta el método para ver Lᵢ(x) y yᵢ·Lᵢ(x)" />
           )}
         </div>
         {resulting}

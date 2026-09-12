@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/ui/empty-state'
 import { monomialLatex } from '@/engine/polynomial'
 import type { MethodId, NumericalResult } from '@/engine/types'
 import { cn } from '@/lib/utils'
@@ -15,17 +16,17 @@ function formatNumber(value: number | null, precision: number) {
 
 function Metric({ label, value, className }: { label: string; value: string; className?: string }) {
   return (
-    <div className="flex flex-col gap-1 rounded-box border border-border bg-panel-alt px-4 py-3">
-      <span className="text-[11px] uppercase tracking-wide text-text-dim">{label}</span>
-      <span className={cn('font-mono-nums text-lg text-text', className)}>{value}</span>
+    <div className="border-b border-border px-4 py-3 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
+      <div className="text-[13px] text-text-muted">{label}</div>
+      <div className={cn('mt-1 font-mono-nums text-lg leading-tight text-text', className)}>{value}</div>
     </div>
   )
 }
 
 function ResultingPolynomial({ latex }: { latex: string }) {
   return (
-    <div className="rounded-box border border-border-strong bg-panel-alt px-4 py-4">
-      <div className="mb-2 text-[11px] uppercase tracking-wide text-text-dim">Polinomio resultante</div>
+    <div className="rounded-box border border-border bg-panel px-4 py-4">
+      <h3 className="mb-2 text-sm font-medium text-text">Polinomio resultante</h3>
       <math-field key={latex} read-only className="resulting-polynomial block">
         {latex}
       </math-field>
@@ -36,9 +37,10 @@ function ResultingPolynomial({ latex }: { latex: string }) {
 function ResultSummary({ result, precision, method }: ResultSummaryProps) {
   if (!result) {
     return (
-      <div className="flex h-32 items-center justify-center rounded-box border border-dashed border-border text-sm text-text-dim">
-        Ejecuta el método para ver el resultado
-      </div>
+      <EmptyState
+        title="Todavía no hay un resultado"
+        hint="Completa los datos de la izquierda y pulsa Ejecutar. Ctrl+Enter también lanza el método actual."
+      />
     )
   }
 
@@ -60,31 +62,44 @@ function ResultSummary({ result, precision, method }: ResultSummaryProps) {
           {polynomialLatex && <ResultingPolynomial latex={polynomialLatex} />}
           <div
             className={cn(
-              'grid grid-cols-2 gap-3',
-              result.xTarget !== undefined ? 'sm:grid-cols-4' : 'sm:grid-cols-2',
+              'grid overflow-hidden rounded-box border border-border bg-panel',
+              result.xTarget !== undefined ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2',
             )}
           >
             {result.xTarget !== undefined && (
               <>
                 <Metric label="x interpolado" value={formatNumber(result.xTarget, precision)} />
-                <Metric label="P(x) evaluado" value={formatNumber(result.finalValue, precision)} className="text-accent-strong" />
+                <Metric
+                  label="P(x) evaluado"
+                  value={formatNumber(result.finalValue, precision)}
+                  className="text-accent-strong"
+                />
               </>
             )}
-            <Metric label="Puntos" value={result.interpolationPoints ? String(result.interpolationPoints.length) : '—'} />
+            <Metric
+              label="Puntos"
+              value={result.interpolationPoints ? String(result.interpolationPoints.length) : '—'}
+            />
             <Metric label="Grado" value={degree === null ? '—' : String(degree)} />
           </div>
         </>
       ) : (
         <div
           className={cn(
-            'grid grid-cols-2 gap-3',
-            result.constantDerivative !== undefined ? 'sm:grid-cols-5' : 'sm:grid-cols-4',
+            'grid overflow-hidden rounded-box border border-border bg-panel',
+            result.constantDerivative !== undefined
+              ? 'grid-cols-2 sm:grid-cols-5'
+              : 'grid-cols-2 sm:grid-cols-4',
           )}
         >
           {result.constantDerivative !== undefined && (
             <Metric label="d = f'(x₀)" value={formatNumber(result.constantDerivative, precision)} />
           )}
-          <Metric label="Valor final" value={formatNumber(result.finalValue, precision)} className="text-accent-strong" />
+          <Metric
+            label="Valor final"
+            value={formatNumber(result.finalValue, precision)}
+            className="text-accent-strong"
+          />
           <Metric label="Iteraciones" value={String(result.iterations)} />
           <Metric label="Error" value={formatNumber(result.error, precision)} />
           <Metric label="Residuo |f(xₙ)|" value={formatNumber(result.residual, precision)} />
