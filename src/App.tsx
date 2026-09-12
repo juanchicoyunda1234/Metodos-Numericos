@@ -1,10 +1,12 @@
 import { useMemo, useRef, useState } from 'react'
 
 import type { InterpolationParams, RootFindingParams } from '@/components/ParamsForm/ParamsForm'
+import { ChartControls } from '@/components/ConvergenceChart/ChartControls'
 import { ComparisonView } from '@/components/ComparisonView/ComparisonView'
 import { ConvergenceChart } from '@/components/ConvergenceChart/ConvergenceChart'
 import type { ConvergenceChartHandle } from '@/components/ConvergenceChart/ConvergenceChart'
-import { buildChartOption } from '@/components/ConvergenceChart/chartOptions'
+import { buildChartOption, DEFAULT_CHART_LAYERS } from '@/components/ConvergenceChart/chartOptions'
+import type { ChartLayers } from '@/components/ConvergenceChart/chartOptions'
 import { IterationTable } from '@/components/IterationTable/IterationTable'
 import { MathInput } from '@/components/MathInput/MathInput'
 import { MethodSelector } from '@/components/MethodSelector/MethodSelector'
@@ -65,6 +67,7 @@ function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [printChartUrl, setPrintChartUrl] = useState<string | null>(null)
   const [activeIteration, setActiveIteration] = useState<number | null>(null)
+  const [chartLayers, setChartLayers] = useState<ChartLayers>(DEFAULT_CHART_LAYERS)
   const chartRef = useRef<ConvergenceChartHandle>(null)
 
   const isInterpolation = selectedMethod === 'newton-interpolacion' || selectedMethod === 'lagrange'
@@ -172,8 +175,15 @@ function App() {
     y: p.y.trim() === '' ? Number.NaN : Number(p.y),
   }))
   const chartOption = useMemo(
-    () => buildChartOption(selectedMethod, activeResult, precision, isRootFinding ? activeIteration : null),
-    [selectedMethod, activeResult, precision, isRootFinding, activeIteration],
+    () =>
+      buildChartOption(
+        selectedMethod,
+        activeResult,
+        precision,
+        isRootFinding ? activeIteration : null,
+        isRootFinding ? chartLayers : DEFAULT_CHART_LAYERS,
+      ),
+    [selectedMethod, activeResult, precision, isRootFinding, activeIteration, chartLayers],
   )
   const chartHeight = isRootFinding ? 440 : 340
 
@@ -294,6 +304,15 @@ function App() {
                   />
                   <div className="flex flex-col gap-2">
                     <div className="text-[11px] uppercase tracking-wide text-text-dim">Gráfica</div>
+                    {isRootFinding && (
+                      <ChartControls
+                        layers={chartLayers}
+                        onLayersChange={setChartLayers}
+                        iterationCount={activeIterations.length}
+                        activeIteration={activeIteration}
+                        onActiveIterationChange={setActiveIteration}
+                      />
+                    )}
                     <ConvergenceChart
                       ref={chartRef}
                       option={chartOption}

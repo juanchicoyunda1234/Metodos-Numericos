@@ -18,6 +18,19 @@ const COLOR = {
   constant: '#f0a53c',
   fxMuted: '#8994a6',
   active: '#e3e9f1',
+  tangent: '#b98ff0',
+}
+
+export interface ChartLayers {
+  iterations: boolean
+  trajectory: boolean
+  tangents: boolean
+}
+
+export const DEFAULT_CHART_LAYERS: ChartLayers = {
+  iterations: true,
+  trajectory: true,
+  tangents: false,
 }
 
 function axisCommon() {
@@ -66,6 +79,20 @@ function trajectoryPath(iterations: Iteration[], limit = 12): ([number, number] 
   return path
 }
 
+function tangentLines(iterations: Iteration[], xMin: number, xMax: number, limit = 8): ([number, number] | null)[] {
+  const span = Math.max((xMax - xMin) * 0.12, 1e-6)
+  const lines: ([number, number] | null)[] = []
+  const n = Math.min(iterations.length, limit)
+  for (let i = 0; i < n; i++) {
+    const it = iterations[i]
+    if (!Number.isFinite(it.x) || !Number.isFinite(it.fx) || it.derivative === undefined || !Number.isFinite(it.derivative)) continue
+    const x1 = it.x - span
+    const x2 = it.x + span
+    lines.push([x1, it.fx + it.derivative * (x1 - it.x)], [x2, it.fx + it.derivative * (x2 - it.x)], null)
+  }
+  return lines
+}
+
 function xnSeries(result: NumericalResult): { value: [number, number]; n: number }[] {
   const data = result.iterationData.map((it) => ({ value: [it.n, it.x] as [number, number], n: it.n }))
   const last = result.iterationData.at(-1)
@@ -83,11 +110,12 @@ export function buildChartOption(
   result: NumericalResult | null,
   precision: number,
   activeIteration: number | null = null,
+  layers: ChartLayers = DEFAULT_CHART_LAYERS,
 ): EChartsOption | null {
   if (!result) return null
 
   if (method === 'newton-raphson' || method === 'newton-raphson-constante') {
-    return buildRootFindingOption(result, precision, activeIteration)
+    return buildRootFindingOption(result, precision, activeIteration, layers)
   }
 
   if (method === 'newton-interpolacion' || method === 'lagrange') {
@@ -101,6 +129,7 @@ function buildRootFindingOption(
   result: NumericalResult,
   precision: number,
   activeIteration: number | null = null,
+  layers: ChartLayers = DEFAULT_CHART_LAYERS,
 ): EChartsOption | null {
   const expression = result.equation
   if (!expression) return null
@@ -160,7 +189,10 @@ function buildRootFindingOption(
         label: { show: false },
       },
     },
-    {
+  ]
+
+  if (layers.trajectory) {
+    series.push({
       name: 'Trayectoria',
       type: 'line',
       xAxisIndex: 0,
@@ -169,8 +201,24 @@ function buildRootFindingOption(
       showSymbol: false,
       lineStyle: { width: 1.5, color: COLOR.path, type: 'solid' },
       itemStyle: { color: COLOR.path },
-    },
-    {
+    })
+  }
+
+  if (layers.tangents) {
+    series.push({
+      name: 'Tangentes',
+      type: 'line',
+      xAxisIndex: 0,
+      yAxisIndex: 0,
+      data: tangentLines(result.iterationData, xMin, xMax),
+      showSymbol: false,
+      lineStyle: { width: 1, color: COLOR.tangent, type: 'dashed' },
+      itemStyle: { color: COLOR.tangent },
+    })
+  }
+
+  if (layers.iterations) {
+    series.push({
       name: 'Iteraciones',
       type: 'scatter',
       xAxisIndex: 0,
@@ -179,30 +227,31 @@ function buildRootFindingOption(
       symbolSize: 8,
       cursor: 'pointer',
       itemStyle: { color: COLOR.points, borderColor: '#0a0d12', borderWidth: 1 },
-    },
-    {
-      name: 'xₙ',
-      type: 'line',
-      xAxisIndex: 1,
-      yAxisIndex: 1,
-      data: xnData,
-      showSymbol: true,
-      symbolSize: 7,
-      cursor: 'pointer',
-      lineStyle: { width: 2, color: COLOR.fx },
-      itemStyle: { color: COLOR.fx },
-      markLine:
-        root !== null
-          ? {
-              silent: true,
-              symbol: 'none',
-              lineStyle: { color: COLOR.root, type: 'dashed', width: 1 },
-              data: [{ yAxis: root }],
-              label: { show: false },
-            }
-          : undefined,
-    },
-  ]
+    })
+  }
+
+  series.push({
+    name: 'xₙ',
+    type: 'line',
+    xAxisIndex: 1,
+    yAxisIndex: 1,
+    data: xnData,
+    showSymbol: true,
+    symbolSize: 7,
+    cursor: 'pointer',
+    lineStyle: { width: 2, color: COLOR.fx },
+    itemStyle: { color: COLOR.fx },
+    markLine:
+      root !== null
+        ? {
+            silent: true,
+            symbol: 'none',
+            lineStyle: { color: COLOR.root, type: 'dashed', width: 1 },
+            data: [{ yAxis: root }],
+            label: { show: false },
+          }
+        : undefined,
+  })
 
   if (rootPoint) {
     series.push({
