@@ -10,6 +10,7 @@ const SelectValue = SelectPrimitive.Value
 function SelectTrigger({ className, children, ...props }: ComponentProps<typeof SelectPrimitive.Trigger>) {
   return (
     <SelectPrimitive.Trigger
+      data-slot="select-trigger"
       className={cn(
         'flex h-8 items-center justify-between gap-2 rounded-box border border-border bg-panel-alt px-2.5 text-sm text-text',
         'transition-colors duration-150 focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent data-[placeholder]:text-text-dim',

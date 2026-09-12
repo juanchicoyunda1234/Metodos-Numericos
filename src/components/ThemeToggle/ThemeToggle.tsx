@@ -9,13 +9,12 @@ function ThemeToggle({ theme, onToggle }: { theme: ColorScheme; onToggle: () => 
     <Button
       type="button"
       variant="outline"
-      size="sm"
-      className="h-8 w-8 px-0"
+      size="icon-sm"
       onClick={onToggle}
       aria-label={`Cambiar a tema ${next}`}
       title={`Tema ${next}`}
     >
-      {theme === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+      {theme === 'dark' ? <Sun /> : <Moon />}
     </Button>
   )
 }

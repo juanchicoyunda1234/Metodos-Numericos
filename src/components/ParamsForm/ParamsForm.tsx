@@ -154,12 +154,12 @@ function InterpolationParamsForm({
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
+                size="icon-sm"
                 onClick={() => removePoint(index)}
                 aria-label="Eliminar punto"
                 disabled={params.points.length <= 2}
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 />
               </Button>
             </div>
           ))}

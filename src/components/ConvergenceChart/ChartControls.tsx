@@ -105,12 +105,12 @@ function ChartControls({
         <Button
           type="button"
           variant="outline"
-          size="sm"
+          size="icon-sm"
           onClick={handleTogglePlay}
           disabled={iterationCount === 0}
           aria-label={isPlaying ? 'Pausar' : 'Reproducir'}
         >
-          {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+          {isPlaying ? <Pause /> : <Play />}
         </Button>
         <input
           type="range"
