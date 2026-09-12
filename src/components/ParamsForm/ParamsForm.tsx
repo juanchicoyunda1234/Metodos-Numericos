@@ -4,6 +4,7 @@ import type { MethodId } from '@/engine/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Tooltip } from '@/components/ui/tooltip'
 
 interface RootFindingParams {
   x0: string
@@ -55,9 +56,13 @@ function RootFindingParamsForm({
   onChange: (params: RootFindingParams) => void
 }) {
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="x0">x₀</Label>
+        <Tooltip content="Valor inicial desde el que arranca la iteración.">
+          <Label htmlFor="x0" className="w-fit cursor-help">
+            x₀
+          </Label>
+        </Tooltip>
         <Input
           id="x0"
           inputMode="decimal"
@@ -67,7 +72,11 @@ function RootFindingParamsForm({
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="tolerance">Tolerancia ε</Label>
+        <Tooltip content="Criterio de parada: el método se detiene cuando |xₙ₊₁ − xₙ| < ε.">
+          <Label htmlFor="tolerance" className="w-fit cursor-help">
+            Tolerancia ε
+          </Label>
+        </Tooltip>
         <Input
           id="tolerance"
           inputMode="decimal"
@@ -77,7 +86,11 @@ function RootFindingParamsForm({
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="maxIterations">Máx. iteraciones</Label>
+        <Tooltip content="Número máximo de pasos antes de declarar que no convergió.">
+          <Label htmlFor="maxIterations" className="w-fit cursor-help">
+            Máx. iteraciones
+          </Label>
+        </Tooltip>
         <Input
           id="maxIterations"
           inputMode="numeric"
@@ -115,7 +128,9 @@ function InterpolationParamsForm({
     <div className="flex flex-col gap-4">
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <Label>Puntos (xᵢ, yᵢ)</Label>
+          <Tooltip content="Pares (xᵢ, yᵢ) por los que debe pasar el polinomio interpolante.">
+            <Label className="w-fit cursor-help">Puntos (xᵢ, yᵢ)</Label>
+          </Tooltip>
           <Button type="button" variant="outline" size="sm" onClick={addPoint}>
             + Agregar punto
           </Button>
@@ -151,7 +166,11 @@ function InterpolationParamsForm({
         </div>
       </div>
       <div className="flex flex-col gap-1.5 max-w-[220px]">
-        <Label htmlFor="xTarget">x a interpolar (opcional)</Label>
+        <Tooltip content="Valor de x donde se evalúa el polinomio. Déjalo vacío si solo quieres construirlo.">
+          <Label htmlFor="xTarget" className="w-fit cursor-help">
+            x a interpolar (opcional)
+          </Label>
+        </Tooltip>
         <Input
           id="xTarget"
           inputMode="decimal"

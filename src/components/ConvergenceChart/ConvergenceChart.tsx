@@ -1,10 +1,14 @@
 import * as echarts from 'echarts'
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 
+import { chartExportBackground } from '@/components/ConvergenceChart/chartOptions'
+import type { ColorScheme } from '@/lib/theme'
+
 interface ConvergenceChartProps {
   option: echarts.EChartsOption | null
   height?: number
   onIterationClick?: (n: number) => void
+  colorScheme?: ColorScheme
 }
 
 interface ConvergenceChartHandle {
@@ -19,16 +23,26 @@ const BASE_OPTION: echarts.EChartsOption = {
 }
 
 const ConvergenceChart = forwardRef<ConvergenceChartHandle, ConvergenceChartProps>(function ConvergenceChart(
-  { option, height = 320, onIterationClick },
+  { option, height = 320, onIterationClick, colorScheme = 'dark' },
   ref,
 ) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<echarts.ECharts | null>(null)
   const onIterationClickRef = useRef(onIterationClick)
-  onIterationClickRef.current = onIterationClick
+  const colorSchemeRef = useRef(colorScheme)
+
+  useEffect(() => {
+    onIterationClickRef.current = onIterationClick
+  }, [onIterationClick])
+
+  useEffect(() => {
+    colorSchemeRef.current = colorScheme
+  }, [colorScheme])
 
   useImperativeHandle(ref, () => ({
-    getDataUrl: () => chartRef.current?.getDataURL({ pixelRatio: 2, backgroundColor: '#0a0d12' }) ?? null,
+    getDataUrl: () =>
+      chartRef.current?.getDataURL({ pixelRatio: 2, backgroundColor: chartExportBackground(colorSchemeRef.current) }) ??
+      null,
   }))
 
   useEffect(() => {
@@ -63,7 +77,7 @@ const ConvergenceChart = forwardRef<ConvergenceChartHandle, ConvergenceChartProp
   }, [option])
 
   return (
-    <div className="relative border border-border">
+    <div className="relative rounded-box border border-border">
       <div ref={containerRef} style={{ height }} className="w-full" />
       {!option && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-text-dim">

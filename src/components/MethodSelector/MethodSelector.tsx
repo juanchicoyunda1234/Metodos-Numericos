@@ -6,7 +6,7 @@ interface MethodGroup {
   methods: { id: MethodId; label: string }[]
 }
 
-const GROUPS: MethodGroup[] = [
+const METHOD_GROUPS: MethodGroup[] = [
   {
     label: 'Raíces',
     methods: [
@@ -39,7 +39,7 @@ function MethodSelector({ selected, onSelect }: MethodSelectorProps) {
         Métodos
       </div>
       <div className="flex flex-col gap-4">
-        {GROUPS.map((group) => (
+        {METHOD_GROUPS.map((group) => (
           <div key={group.label}>
             <div className="px-4 pb-1.5 text-[11px] font-medium uppercase tracking-wide text-text-muted">
               ▸ {group.label}
@@ -72,4 +72,4 @@ function MethodSelector({ selected, onSelect }: MethodSelectorProps) {
   )
 }
 
-export { MethodSelector }
+export { MethodSelector, METHOD_GROUPS }

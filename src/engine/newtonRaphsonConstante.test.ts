@@ -65,6 +65,20 @@ describe('Newton-Raphson con derivada constante', () => {
     expect(result.message).toBe("No se puede ejecutar el método: f'(x₀) = 0")
   })
 
+  it('corta con DIVERGIO si |x| crece sostenidamente', () => {
+    const result = newtonRaphsonConstante({
+      expression: 'e^x+1',
+      x0: -6,
+      tolerance: 1e-8,
+      maxIterations: 100,
+    })
+
+    expect(result.status).toBe('DIVERGIO')
+    expect(result.iterations).toBeGreaterThanOrEqual(3)
+    expect(result.iterations).toBeLessThan(100)
+    expect(result.message).toMatch(/divergiendo/)
+  })
+
   it('oscila 1 → 2 → 0 en x³ − x − 2 con x₀ = 1', () => {
     const result = newtonRaphsonConstante({
       expression: 'x^3-x-2',

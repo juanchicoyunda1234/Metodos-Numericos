@@ -1,4 +1,4 @@
-export type ResultStatus = 'CONVERGIO' | 'NO_CONVERGIO' | 'ERROR_NUMERICO'
+export type ResultStatus = 'CONVERGIO' | 'NO_CONVERGIO' | 'ERROR_NUMERICO' | 'DIVERGIO'
 
 export interface Iteration {
   n: number

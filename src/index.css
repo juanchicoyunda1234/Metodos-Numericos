@@ -5,29 +5,76 @@
   --font-mono:
     ui-monospace, 'Cascadia Code', 'Segoe UI Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
 
-  --color-bg: #0a0d12;
-  --color-panel: #0f131a;
-  --color-panel-alt: #141922;
-  --color-border: #202836;
-  --color-border-strong: #2d3849;
-  --color-text: #e3e9f1;
-  --color-text-muted: #8994a6;
-  --color-text-dim: #576174;
-  --color-accent: #45b8e0;
-  --color-accent-strong: #6fd0f2;
-  --color-accent-dim: #1c3c49;
-  --color-success: #4fd68c;
-  --color-success-dim: #16332a;
-  --color-warning: #f0a53c;
-  --color-warning-dim: #3a2a15;
-  --color-danger: #f0645f;
-  --color-danger-dim: #3a1c1c;
+  --color-bg: var(--n-bg);
+  --color-panel: var(--n-panel);
+  --color-panel-alt: var(--n-panel-alt);
+  --color-border: var(--n-border);
+  --color-border-strong: var(--n-border-strong);
+  --color-text: var(--n-text);
+  --color-text-muted: var(--n-text-muted);
+  --color-text-dim: var(--n-text-dim);
+  --color-accent: var(--n-accent);
+  --color-accent-strong: var(--n-accent-strong);
+  --color-accent-dim: var(--n-accent-dim);
+  --color-on-accent: var(--n-on-accent);
+  --color-success: var(--n-success);
+  --color-success-dim: var(--n-success-dim);
+  --color-warning: var(--n-warning);
+  --color-warning-dim: var(--n-warning-dim);
+  --color-danger: var(--n-danger);
+  --color-danger-dim: var(--n-danger-dim);
+  --color-on-danger: var(--n-on-danger);
+
+  --radius-box: 5px;
 
   --animate-pulse-slow: pulse 2.4s ease-in-out infinite;
 }
 
-:root {
+:root,
+[data-theme='dark'] {
   color-scheme: dark;
+  --n-bg: #0a0d12;
+  --n-panel: #0f131a;
+  --n-panel-alt: #141922;
+  --n-border: #202836;
+  --n-border-strong: #2d3849;
+  --n-text: #e3e9f1;
+  --n-text-muted: #8994a6;
+  --n-text-dim: #576174;
+  --n-accent: #45b8e0;
+  --n-accent-strong: #6fd0f2;
+  --n-accent-dim: #1c3c49;
+  --n-on-accent: #04141c;
+  --n-success: #4fd68c;
+  --n-success-dim: #16332a;
+  --n-warning: #f0a53c;
+  --n-warning-dim: #3a2a15;
+  --n-danger: #f0645f;
+  --n-danger-dim: #3a1c1c;
+  --n-on-danger: #1a0605;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --n-bg: #eef1f6;
+  --n-panel: #f7f9fc;
+  --n-panel-alt: #e4eaf1;
+  --n-border: #c5d0dc;
+  --n-border-strong: #9aabbd;
+  --n-text: #1b2430;
+  --n-text-muted: #4a5868;
+  --n-text-dim: #6a7888;
+  --n-accent: #157ea3;
+  --n-accent-strong: #0d6484;
+  --n-accent-dim: #d3eef6;
+  --n-on-accent: #f4fbfe;
+  --n-success: #157a43;
+  --n-success-dim: #d5f0e1;
+  --n-warning: #9a5b08;
+  --n-warning-dim: #f6e4c4;
+  --n-danger: #b42318;
+  --n-danger-dim: #f8d5d2;
+  --n-on-danger: #fff6f5;
 }
 
 * {
@@ -72,7 +119,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: var(--color-border-strong);
-  border-radius: 0;
+  border-radius: var(--radius-box);
 }
 
 math-field {
@@ -88,4 +135,15 @@ math-field {
 
 math-field.resulting-polynomial {
   font-size: 1.85rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

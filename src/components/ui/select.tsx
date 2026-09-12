@@ -11,8 +11,8 @@ function SelectTrigger({ className, children, ...props }: ComponentProps<typeof 
   return (
     <SelectPrimitive.Trigger
       className={cn(
-        'flex h-8 items-center justify-between gap-2 border border-border bg-panel-alt px-2.5 text-sm text-text',
-        'focus:border-accent focus:outline-none data-[placeholder]:text-text-dim',
+        'flex h-8 items-center justify-between gap-2 rounded-box border border-border bg-panel-alt px-2.5 text-sm text-text',
+        'focus:border-accent focus:outline-none focus-visible:ring-1 focus-visible:ring-accent data-[placeholder]:text-text-dim',
         className,
       )}
       {...props}
@@ -29,7 +29,7 @@ function SelectContent({ className, children, ...props }: ComponentProps<typeof 
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
-        className={cn('z-50 border border-border-strong bg-panel shadow-lg', className)}
+        className={cn('z-50 rounded-box border border-border-strong bg-panel shadow-lg', className)}
         position="popper"
         sideOffset={4}
         {...props}

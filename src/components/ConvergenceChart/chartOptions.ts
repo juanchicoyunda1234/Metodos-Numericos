@@ -3,8 +3,9 @@ import type { EChartsOption, LineSeriesOption, ScatterSeriesOption } from 'echar
 import { parseExpression, sampleExpression } from '@/engine/parser'
 import { evaluateMonomial, sampleMonomial } from '@/engine/polynomial'
 import type { Iteration, MethodId, NumericalResult } from '@/engine/types'
+import type { ColorScheme } from '@/lib/theme'
 
-const COLOR = {
+const DARK = {
   axis: '#8994a6',
   split: '#202836',
   line: '#2d3849',
@@ -19,6 +20,41 @@ const COLOR = {
   fxMuted: '#8994a6',
   active: '#e3e9f1',
   tangent: '#b98ff0',
+  markerBorder: '#0a0d12',
+  tooltipBg: '#141922',
+  tooltipText: '#e3e9f1',
+  exportBg: '#0a0d12',
+}
+
+const LIGHT = {
+  axis: '#4a5868',
+  split: '#c5d0dc',
+  line: '#9aabbd',
+  fx: '#157ea3',
+  points: '#9a5b08',
+  root: '#157a43',
+  path: '#b42318',
+  poly: '#0d6484',
+  interp: '#157a43',
+  classic: '#157ea3',
+  constant: '#9a5b08',
+  fxMuted: '#4a5868',
+  active: '#1b2430',
+  tangent: '#5c4d8a',
+  markerBorder: '#f7f9fc',
+  tooltipBg: '#f7f9fc',
+  tooltipText: '#1b2430',
+  exportBg: '#eef1f6',
+}
+
+type Palette = typeof DARK
+
+function colors(scheme: ColorScheme): Palette {
+  return scheme === 'light' ? LIGHT : DARK
+}
+
+export function chartExportBackground(scheme: ColorScheme): string {
+  return colors(scheme).exportBg
 }
 
 export interface ChartLayers {
@@ -33,13 +69,13 @@ export const DEFAULT_CHART_LAYERS: ChartLayers = {
   tangents: false,
 }
 
-function axisCommon() {
+function axisCommon(c: Palette) {
   return {
-    axisLine: { lineStyle: { color: COLOR.line } },
-    axisTick: { lineStyle: { color: COLOR.line } },
-    axisLabel: { color: COLOR.axis },
-    splitLine: { lineStyle: { color: COLOR.split } },
-    nameTextStyle: { color: COLOR.axis },
+    axisLine: { lineStyle: { color: c.line } },
+    axisTick: { lineStyle: { color: c.line } },
+    axisLabel: { color: c.axis },
+    splitLine: { lineStyle: { color: c.split } },
+    nameTextStyle: { color: c.axis },
   }
 }
 
@@ -105,21 +141,28 @@ function tooltipValue(value: unknown, precision: number) {
   return value.toFixed(precision)
 }
 
+function errorPoints(result: NumericalResult): { value: [number, number]; n: number }[] {
+  return result.iterationData
+    .filter((it) => Number.isFinite(it.error) && it.error > 0)
+    .map((it) => ({ value: [it.n, it.error] as [number, number], n: it.n }))
+}
+
 export function buildChartOption(
   method: MethodId,
   result: NumericalResult | null,
   precision: number,
   activeIteration: number | null = null,
   layers: ChartLayers = DEFAULT_CHART_LAYERS,
+  scheme: ColorScheme = 'dark',
 ): EChartsOption | null {
   if (!result) return null
 
   if (method === 'newton-raphson' || method === 'newton-raphson-constante') {
-    return buildRootFindingOption(result, precision, activeIteration, layers)
+    return buildRootFindingOption(result, precision, activeIteration, layers, scheme)
   }
 
   if (method === 'newton-interpolacion' || method === 'lagrange') {
-    return buildInterpolationOption(result, precision)
+    return buildInterpolationOption(result, precision, scheme)
   }
 
   return null
@@ -130,7 +173,9 @@ function buildRootFindingOption(
   precision: number,
   activeIteration: number | null = null,
   layers: ChartLayers = DEFAULT_CHART_LAYERS,
+  scheme: ColorScheme = 'dark',
 ): EChartsOption | null {
+  const c = colors(scheme)
   const expression = result.equation
   if (!expression) return null
 
@@ -179,12 +224,12 @@ function buildRootFindingOption(
       data: fxLine,
       showSymbol: false,
       sampling: 'lttb',
-      lineStyle: { width: 2, color: COLOR.fx },
-      itemStyle: { color: COLOR.fx },
+      lineStyle: { width: 2, color: c.fx },
+      itemStyle: { color: c.fx },
       markLine: {
         silent: true,
         symbol: 'none',
-        lineStyle: { color: COLOR.axis, type: 'dashed', width: 1, opacity: 0.45 },
+        lineStyle: { color: c.axis, type: 'dashed', width: 1, opacity: 0.45 },
         data: [{ yAxis: 0 }],
         label: { show: false },
       },
@@ -199,8 +244,8 @@ function buildRootFindingOption(
       yAxisIndex: 0,
       data: path,
       showSymbol: false,
-      lineStyle: { width: 1.5, color: COLOR.path, type: 'solid' },
-      itemStyle: { color: COLOR.path },
+      lineStyle: { width: 1.5, color: c.path, type: 'solid' },
+      itemStyle: { color: c.path },
     })
   }
 
@@ -212,8 +257,8 @@ function buildRootFindingOption(
       yAxisIndex: 0,
       data: tangentLines(result.iterationData, xMin, xMax),
       showSymbol: false,
-      lineStyle: { width: 1, color: COLOR.tangent, type: 'dashed' },
-      itemStyle: { color: COLOR.tangent },
+      lineStyle: { width: 1, color: c.tangent, type: 'dashed' },
+      itemStyle: { color: c.tangent },
     })
   }
 
@@ -226,7 +271,7 @@ function buildRootFindingOption(
       data: iterationPoints,
       symbolSize: 8,
       cursor: 'pointer',
-      itemStyle: { color: COLOR.points, borderColor: '#0a0d12', borderWidth: 1 },
+      itemStyle: { color: c.points, borderColor: c.markerBorder, borderWidth: 1 },
     })
   }
 
@@ -239,14 +284,14 @@ function buildRootFindingOption(
     showSymbol: true,
     symbolSize: 7,
     cursor: 'pointer',
-    lineStyle: { width: 2, color: COLOR.fx },
-    itemStyle: { color: COLOR.fx },
+    lineStyle: { width: 2, color: c.fx },
+    itemStyle: { color: c.fx },
     markLine:
       root !== null
         ? {
             silent: true,
             symbol: 'none',
-            lineStyle: { color: COLOR.root, type: 'dashed', width: 1 },
+            lineStyle: { color: c.root, type: 'dashed', width: 1 },
             data: [{ yAxis: root }],
             label: { show: false },
           }
@@ -262,7 +307,7 @@ function buildRootFindingOption(
       data: [rootPoint],
       symbolSize: 11,
       symbol: 'diamond',
-      itemStyle: { color: COLOR.root, borderColor: '#0a0d12', borderWidth: 1 },
+      itemStyle: { color: c.root, borderColor: c.markerBorder, borderWidth: 1 },
     })
   }
 
@@ -280,7 +325,7 @@ function buildRootFindingOption(
         symbolSize: 18,
         symbol: 'circle',
         silent: true,
-        itemStyle: { color: 'transparent', borderColor: COLOR.active, borderWidth: 2 },
+        itemStyle: { color: 'transparent', borderColor: c.active, borderWidth: 2 },
         zlevel: 1,
       })
       series.push({
@@ -291,7 +336,7 @@ function buildRootFindingOption(
         data: activeXnPoint,
         symbolSize: 15,
         silent: true,
-        itemStyle: { color: 'transparent', borderColor: COLOR.active, borderWidth: 2 },
+        itemStyle: { color: 'transparent', borderColor: c.active, borderWidth: 2 },
         zlevel: 1,
       })
     }
@@ -300,15 +345,15 @@ function buildRootFindingOption(
   return {
     legend: {
       top: 4,
-      textStyle: { color: COLOR.axis, fontSize: 11 },
+      textStyle: { color: c.axis, fontSize: 11 },
       itemWidth: 12,
       itemHeight: 8,
     },
     tooltip: {
       trigger: 'item',
-      backgroundColor: '#141922',
-      borderColor: COLOR.line,
-      textStyle: { color: '#e3e9f1', fontSize: 12 },
+      backgroundColor: c.tooltipBg,
+      borderColor: c.line,
+      textStyle: { color: c.tooltipText, fontSize: 12 },
       formatter: (raw) => {
         const p = Array.isArray(raw) ? raw[0] : raw
         const value = p.value
@@ -325,24 +370,29 @@ function buildRootFindingOption(
       { left: 56, right: 28, top: '68%', height: '22%' },
     ],
     xAxis: [
-      { type: 'value', gridIndex: 0, name: 'x', ...axisCommon(), min: xMin, max: xMax },
+      { type: 'value', gridIndex: 0, name: 'x', ...axisCommon(c), min: xMin, max: xMax },
       {
         type: 'value',
         gridIndex: 1,
         name: 'n',
         minInterval: 1,
-        ...axisCommon(),
+        ...axisCommon(c),
       },
     ],
     yAxis: [
-      { type: 'value', gridIndex: 0, name: 'f(x)', scale: true, ...axisCommon() },
-      { type: 'value', gridIndex: 1, name: 'xₙ', scale: true, ...axisCommon() },
+      { type: 'value', gridIndex: 0, name: 'f(x)', scale: true, ...axisCommon(c) },
+      { type: 'value', gridIndex: 1, name: 'xₙ', scale: true, ...axisCommon(c) },
     ],
     series,
   }
 }
 
-function buildInterpolationOption(result: NumericalResult, precision: number): EChartsOption | null {
+function buildInterpolationOption(
+  result: NumericalResult,
+  precision: number,
+  scheme: ColorScheme = 'dark',
+): EChartsOption | null {
+  const c = colors(scheme)
   const points = result.interpolationPoints
   const coeffs = result.monomialCoefficients
   if (!points || points.length === 0 || !coeffs) return null
@@ -363,15 +413,15 @@ function buildInterpolationOption(result: NumericalResult, precision: number): E
       data: withBreaks(samples, dx),
       showSymbol: false,
       sampling: 'lttb',
-      lineStyle: { width: 2, color: COLOR.poly },
-      itemStyle: { color: COLOR.poly },
+      lineStyle: { width: 2, color: c.poly },
+      itemStyle: { color: c.poly },
     },
     {
       name: 'Puntos',
       type: 'scatter',
       data: points.map((p) => [p.x, p.y]),
       symbolSize: 9,
-      itemStyle: { color: COLOR.points, borderColor: '#0a0d12', borderWidth: 1 },
+      itemStyle: { color: c.points, borderColor: c.markerBorder, borderWidth: 1 },
     },
   ]
 
@@ -382,7 +432,7 @@ function buildInterpolationOption(result: NumericalResult, precision: number): E
       data: [[result.xTarget, result.finalValue]],
       symbolSize: 12,
       symbol: 'diamond',
-      itemStyle: { color: COLOR.interp, borderColor: '#0a0d12', borderWidth: 1 },
+      itemStyle: { color: c.interp, borderColor: c.markerBorder, borderWidth: 1 },
     })
   } else if (result.xTarget !== undefined) {
     const y = evaluateMonomial(coeffs, result.xTarget)
@@ -393,7 +443,7 @@ function buildInterpolationOption(result: NumericalResult, precision: number): E
         data: [[result.xTarget, y]],
         symbolSize: 12,
         symbol: 'diamond',
-        itemStyle: { color: COLOR.interp, borderColor: '#0a0d12', borderWidth: 1 },
+        itemStyle: { color: c.interp, borderColor: c.markerBorder, borderWidth: 1 },
       })
     }
   }
@@ -401,15 +451,15 @@ function buildInterpolationOption(result: NumericalResult, precision: number): E
   return {
     legend: {
       top: 4,
-      textStyle: { color: COLOR.axis, fontSize: 11 },
+      textStyle: { color: c.axis, fontSize: 11 },
       itemWidth: 12,
       itemHeight: 8,
     },
     tooltip: {
       trigger: 'item',
-      backgroundColor: '#141922',
-      borderColor: COLOR.line,
-      textStyle: { color: '#e3e9f1', fontSize: 12 },
+      backgroundColor: c.tooltipBg,
+      borderColor: c.line,
+      textStyle: { color: c.tooltipText, fontSize: 12 },
       formatter: (raw) => {
         const p = Array.isArray(raw) ? raw[0] : raw
         const value = p.value
@@ -420,8 +470,8 @@ function buildInterpolationOption(result: NumericalResult, precision: number): E
       },
     },
     grid: { left: 56, right: 28, top: 40, bottom: 40 },
-    xAxis: { type: 'value', name: 'x', ...axisCommon() },
-    yAxis: { type: 'value', name: 'y', scale: true, ...axisCommon() },
+    xAxis: { type: 'value', name: 'x', ...axisCommon(c) },
+    yAxis: { type: 'value', name: 'y', scale: true, ...axisCommon(c) },
     series,
   }
 }
@@ -430,7 +480,9 @@ export function buildComparisonOption(
   classic: NumericalResult | null,
   constant: NumericalResult | null,
   precision: number,
+  scheme: ColorScheme = 'dark',
 ): EChartsOption | null {
+  const c = colors(scheme)
   if (!classic && !constant) return null
 
   const expression = classic?.equation ?? constant?.equation
@@ -468,12 +520,12 @@ export function buildComparisonOption(
       data: fxLine,
       showSymbol: false,
       sampling: 'lttb',
-      lineStyle: { width: 2, color: COLOR.fxMuted },
-      itemStyle: { color: COLOR.fxMuted },
+      lineStyle: { width: 2, color: c.fxMuted },
+      itemStyle: { color: c.fxMuted },
       markLine: {
         silent: true,
         symbol: 'none',
-        lineStyle: { color: COLOR.axis, type: 'dashed', width: 1, opacity: 0.45 },
+        lineStyle: { color: c.axis, type: 'dashed', width: 1, opacity: 0.45 },
         data: [{ yAxis: 0 }],
         label: { show: false },
       },
@@ -489,8 +541,8 @@ export function buildComparisonOption(
         yAxisIndex: 0,
         data: trajectoryPath(classic.iterationData),
         showSymbol: false,
-        lineStyle: { width: 1.5, color: COLOR.classic },
-        itemStyle: { color: COLOR.classic },
+        lineStyle: { width: 1.5, color: c.classic },
+        itemStyle: { color: c.classic },
       },
       {
         name: 'Iteraciones clásico',
@@ -501,7 +553,7 @@ export function buildComparisonOption(
           .filter((it) => Number.isFinite(it.x) && Number.isFinite(it.fx))
           .map((it) => ({ value: [it.x, it.fx], n: it.n })),
         symbolSize: 8,
-        itemStyle: { color: COLOR.classic, borderColor: '#0a0d12', borderWidth: 1 },
+        itemStyle: { color: c.classic, borderColor: c.markerBorder, borderWidth: 1 },
       },
       {
         name: 'xₙ clásico',
@@ -511,8 +563,8 @@ export function buildComparisonOption(
         data: xnSeries(classic),
         showSymbol: true,
         symbolSize: 7,
-        lineStyle: { width: 2, color: COLOR.classic },
-        itemStyle: { color: COLOR.classic },
+        lineStyle: { width: 2, color: c.classic },
+        itemStyle: { color: c.classic },
       },
     )
   }
@@ -526,8 +578,8 @@ export function buildComparisonOption(
         yAxisIndex: 0,
         data: trajectoryPath(constant.iterationData),
         showSymbol: false,
-        lineStyle: { width: 1.5, color: COLOR.constant, type: 'dashed' },
-        itemStyle: { color: COLOR.constant },
+        lineStyle: { width: 1.5, color: c.constant, type: 'dashed' },
+        itemStyle: { color: c.constant },
       },
       {
         name: 'Iteraciones constante',
@@ -539,7 +591,7 @@ export function buildComparisonOption(
           .map((it) => ({ value: [it.x, it.fx], n: it.n })),
         symbolSize: 8,
         symbol: 'triangle',
-        itemStyle: { color: COLOR.constant, borderColor: '#0a0d12', borderWidth: 1 },
+        itemStyle: { color: c.constant, borderColor: c.markerBorder, borderWidth: 1 },
       },
       {
         name: 'xₙ constante',
@@ -550,8 +602,8 @@ export function buildComparisonOption(
         showSymbol: true,
         symbol: 'triangle',
         symbolSize: 7,
-        lineStyle: { width: 2, color: COLOR.constant, type: 'dashed' },
-        itemStyle: { color: COLOR.constant },
+        lineStyle: { width: 2, color: c.constant, type: 'dashed' },
+        itemStyle: { color: c.constant },
       },
     )
   }
@@ -559,15 +611,15 @@ export function buildComparisonOption(
   return {
     legend: {
       top: 4,
-      textStyle: { color: COLOR.axis, fontSize: 11 },
+      textStyle: { color: c.axis, fontSize: 11 },
       itemWidth: 12,
       itemHeight: 8,
     },
     tooltip: {
       trigger: 'item',
-      backgroundColor: '#141922',
-      borderColor: COLOR.line,
-      textStyle: { color: '#e3e9f1', fontSize: 12 },
+      backgroundColor: c.tooltipBg,
+      borderColor: c.line,
+      textStyle: { color: c.tooltipText, fontSize: 12 },
       formatter: (raw) => {
         const p = Array.isArray(raw) ? raw[0] : raw
         const value = p.value
@@ -584,13 +636,81 @@ export function buildComparisonOption(
       { left: 56, right: 28, top: '68%', height: '22%' },
     ],
     xAxis: [
-      { type: 'value', gridIndex: 0, name: 'x', ...axisCommon(), min: xMin, max: xMax },
-      { type: 'value', gridIndex: 1, name: 'n', minInterval: 1, ...axisCommon() },
+      { type: 'value', gridIndex: 0, name: 'x', ...axisCommon(c), min: xMin, max: xMax },
+      { type: 'value', gridIndex: 1, name: 'n', minInterval: 1, ...axisCommon(c) },
     ],
     yAxis: [
-      { type: 'value', gridIndex: 0, name: 'f(x)', scale: true, ...axisCommon() },
-      { type: 'value', gridIndex: 1, name: 'xₙ', scale: true, ...axisCommon() },
+      { type: 'value', gridIndex: 0, name: 'f(x)', scale: true, ...axisCommon(c) },
+      { type: 'value', gridIndex: 1, name: 'xₙ', scale: true, ...axisCommon(c) },
     ],
+    series,
+  }
+}
+
+export function buildErrorChartOption(
+  classic: NumericalResult | null,
+  constant: NumericalResult | null,
+  precision: number,
+  scheme: ColorScheme = 'dark',
+): EChartsOption | null {
+  const c = colors(scheme)
+  const classicPoints = classic ? errorPoints(classic) : []
+  const constantPoints = constant ? errorPoints(constant) : []
+  if (classicPoints.length === 0 && constantPoints.length === 0) return null
+
+  const series: LineSeriesOption[] = []
+  if (classicPoints.length > 0) {
+    series.push({
+      name: 'Newton clásico',
+      type: 'line',
+      data: classicPoints,
+      showSymbol: true,
+      symbolSize: 7,
+      lineStyle: { width: 2, color: c.classic },
+      itemStyle: { color: c.classic },
+    })
+  }
+  if (constantPoints.length > 0) {
+    series.push({
+      name: 'Newton constante',
+      type: 'line',
+      data: constantPoints,
+      showSymbol: true,
+      symbol: 'triangle',
+      symbolSize: 7,
+      lineStyle: { width: 2, color: c.constant, type: 'dashed' },
+      itemStyle: { color: c.constant },
+    })
+  }
+
+  return {
+    legend: {
+      top: 4,
+      textStyle: { color: c.axis, fontSize: 11 },
+      itemWidth: 12,
+      itemHeight: 8,
+    },
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: c.tooltipBg,
+      borderColor: c.line,
+      textStyle: { color: c.tooltipText, fontSize: 12 },
+      formatter: (raw) => {
+        const p = Array.isArray(raw) ? raw[0] : raw
+        const value = p.value
+        if (Array.isArray(value) && typeof value[0] === 'number' && typeof value[1] === 'number') {
+          return `${p.seriesName}<br/>n = ${tooltipValue(value[0], 0)}<br/>error = ${tooltipValue(value[1], precision)}`
+        }
+        return String(p.seriesName ?? '')
+      },
+    },
+    grid: { left: 64, right: 28, top: 40, bottom: 48 },
+    xAxis: { type: 'value', name: 'Iteración n', minInterval: 1, ...axisCommon(c) },
+    yAxis: {
+      type: 'log',
+      name: 'Error',
+      ...axisCommon(c),
+    },
     series,
   }
 }

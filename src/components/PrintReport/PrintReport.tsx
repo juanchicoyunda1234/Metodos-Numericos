@@ -6,6 +6,7 @@ const STATUS_LABEL: Record<NumericalResult['status'], string> = {
   CONVERGIO: 'Convergió',
   NO_CONVERGIO: 'No convergió',
   ERROR_NUMERICO: 'Error numérico',
+  DIVERGIO: 'Divergió',
 }
 
 interface PrintReportProps {

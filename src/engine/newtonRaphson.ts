@@ -1,3 +1,4 @@
+import { divergenceMessage, isDiverging, nextGrowthStreak, safeResidual } from '@/engine/divergence'
 import { parseExpression } from '@/engine/parser'
 import type { Iteration, NumericalResult } from '@/engine/types'
 
@@ -15,6 +16,7 @@ export function newtonRaphson(params: NewtonRaphsonParams): NumericalResult {
 
   const iterationData: Iteration[] = []
   let x = x0
+  let growthStreak = 0
 
   for (let n = 0; n < maxIterations; n++) {
     const fx = evaluate(x)
@@ -50,6 +52,22 @@ export function newtonRaphson(params: NewtonRaphsonParams): NumericalResult {
         executionTime: performance.now() - startTime,
         iterationData,
         equation: expression,
+      }
+    }
+
+    growthStreak = nextGrowthStreak(x, xNext, growthStreak)
+    if (isDiverging(xNext, growthStreak)) {
+      return {
+        status: 'DIVERGIO',
+        finalValue: Number.isFinite(xNext) ? xNext : x,
+        iterations: n + 1,
+        tolerance,
+        error: Number.isFinite(error) ? error : null,
+        residual: safeResidual(evaluate, xNext),
+        executionTime: performance.now() - startTime,
+        iterationData,
+        equation: expression,
+        message: divergenceMessage(growthStreak),
       }
     }
 

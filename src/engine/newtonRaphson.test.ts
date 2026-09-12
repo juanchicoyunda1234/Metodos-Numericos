@@ -106,6 +106,21 @@ describe('Newton-Raphson clásico', () => {
     expect(result.error as number).toBeGreaterThanOrEqual(1e-12)
   })
 
+  it('corta con DIVERGIO si |x| crece sostenidamente', () => {
+    const result = newtonRaphson({
+      expression: 'e^x+1',
+      x0: 0,
+      tolerance: 1e-8,
+      maxIterations: 100,
+    })
+
+    expect(result.status).toBe('DIVERGIO')
+    expect(result.iterations).toBeGreaterThanOrEqual(3)
+    expect(result.iterations).toBeLessThan(100)
+    expect(result.message).toMatch(/divergiendo/)
+    expect(result.message).toMatch(/creció sostenidamente/)
+  })
+
   it('rechaza una expresión inválida', () => {
     expect(() =>
       newtonRaphson({

@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, TrendingUp, XCircle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import type { MethodId, NumericalResult, ResultStatus } from '@/engine/types'
@@ -26,6 +26,11 @@ const STATUS_CONFIG: Record<ResultStatus, { label: string; icon: LucideIcon; cla
     icon: XCircle,
     className: 'border-danger/40 bg-danger-dim text-danger',
   },
+  DIVERGIO: {
+    label: 'Divergió',
+    icon: TrendingUp,
+    className: 'border-danger/40 bg-danger-dim text-danger',
+  },
 }
 
 function formatNumber(value: number, precision: number) {
@@ -35,7 +40,7 @@ function formatNumber(value: number, precision: number) {
 function buildMessage(result: NumericalResult, method: MethodId, precision: number): string {
   const isRootFinding = method === 'newton-raphson' || method === 'newton-raphson-constante'
 
-  if (result.status === 'ERROR_NUMERICO') {
+  if (result.status === 'ERROR_NUMERICO' || result.status === 'DIVERGIO') {
     return result.message ?? 'No se pudo completar el cálculo.'
   }
 
@@ -59,7 +64,7 @@ function StatusBanner({ result, method, precision }: StatusBannerProps) {
   const message = buildMessage(result, method, precision)
 
   return (
-    <div className={cn('flex items-start gap-3 border px-4 py-3', config.className)}>
+    <div className={cn('flex items-start gap-3 rounded-box border px-4 py-3', config.className)}>
       <Icon className="mt-0.5 h-5 w-5 shrink-0" />
       <div className="flex flex-col gap-0.5">
         <span className="text-sm font-semibold uppercase tracking-wide">{config.label}</span>

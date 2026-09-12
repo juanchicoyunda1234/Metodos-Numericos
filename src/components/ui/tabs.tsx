@@ -20,7 +20,7 @@ function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsPrimitiv
       className={cn(
         'border-b-2 border-transparent px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:text-text',
         'data-[state=active]:border-accent data-[state=active]:text-accent-strong',
-        'focus-visible:outline-none',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-bg',
         className,
       )}
       {...props}

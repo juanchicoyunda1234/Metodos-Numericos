@@ -99,6 +99,7 @@ const EDGE_COUNT = 5
 function statusTimelineLabel(status: NumericalResult['status']) {
   if (status === 'CONVERGIO') return 'CONVERGENCIA'
   if (status === 'NO_CONVERGIO') return 'NO CONVERGIÓ'
+  if (status === 'DIVERGIO') return 'DIVERGIÓ'
   return 'ERROR NUMÉRICO'
 }
 
@@ -343,7 +344,7 @@ function ProcedureView({ method, precision, result, activeIteration = null, onIt
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="border border-border-strong bg-panel-alt px-4 py-3">
+      <div className="rounded-box border border-border-strong bg-panel-alt px-4 py-3">
         <div className="mb-1.5 text-[11px] uppercase tracking-wide text-text-dim">Fórmula general</div>
         <math-field key={GENERAL_FORMULA[method]} read-only className="block">
           {GENERAL_FORMULA[method]}

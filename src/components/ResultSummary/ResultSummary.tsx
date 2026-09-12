@@ -15,7 +15,7 @@ function formatNumber(value: number | null, precision: number) {
 
 function Metric({ label, value, className }: { label: string; value: string; className?: string }) {
   return (
-    <div className="flex flex-col gap-1 border border-border bg-panel-alt px-4 py-3">
+    <div className="flex flex-col gap-1 rounded-box border border-border bg-panel-alt px-4 py-3">
       <span className="text-[11px] uppercase tracking-wide text-text-dim">{label}</span>
       <span className={cn('font-mono-nums text-lg text-text', className)}>{value}</span>
     </div>
@@ -24,7 +24,7 @@ function Metric({ label, value, className }: { label: string; value: string; cla
 
 function ResultingPolynomial({ latex }: { latex: string }) {
   return (
-    <div className="border border-border-strong bg-panel-alt px-4 py-4">
+    <div className="rounded-box border border-border-strong bg-panel-alt px-4 py-4">
       <div className="mb-2 text-[11px] uppercase tracking-wide text-text-dim">Polinomio resultante</div>
       <math-field key={latex} read-only className="resulting-polynomial block">
         {latex}
@@ -36,7 +36,7 @@ function ResultingPolynomial({ latex }: { latex: string }) {
 function ResultSummary({ result, precision, method }: ResultSummaryProps) {
   if (!result) {
     return (
-      <div className="flex h-32 items-center justify-center border border-dashed border-border text-sm text-text-dim">
+      <div className="flex h-32 items-center justify-center rounded-box border border-dashed border-border text-sm text-text-dim">
         Ejecuta el método para ver el resultado
       </div>
     )

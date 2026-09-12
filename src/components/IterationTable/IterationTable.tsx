@@ -32,7 +32,7 @@ interface IterationTableProps {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="flex h-24 items-center justify-center border border-dashed border-border text-sm text-text-dim">
+    <div className="flex h-24 items-center justify-center rounded-box border border-dashed border-border text-sm text-text-dim">
       {message}
     </div>
   )
@@ -40,7 +40,7 @@ function EmptyState({ message }: { message: string }) {
 
 function TableShell({ children }: { children: ReactNode }) {
   return (
-    <div className="overflow-x-auto border border-border">
+    <div className="overflow-x-auto rounded-box border border-border">
       <table className="w-full border-collapse text-sm">{children}</table>
     </div>
   )
@@ -402,7 +402,7 @@ function LagrangeTermsTable({
           {terms.map((term) => {
             const latex = lagrangeBasisLatex(term.i, points, precision)
             return (
-              <div key={term.i} className="border border-border px-4 py-3">
+              <div key={term.i} className="rounded-box border border-border px-4 py-3">
                 <math-field key={latex} read-only className="block">
                   {latex}
                 </math-field>
