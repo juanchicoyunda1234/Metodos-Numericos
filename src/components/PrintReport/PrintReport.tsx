@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 
+import { monomialLatex } from '@/engine/polynomial'
 import type { MethodId, NumericalResult } from '@/engine/types'
 
 const STATUS_LABEL: Record<NumericalResult['status'], string> = {
@@ -20,27 +21,44 @@ interface PrintReportProps {
 }
 
 function formatNumber(value: number | null | undefined, precision: number) {
-  if (value === null || value === undefined || Number.isNaN(value)) return '—'
+  if (value === null || value === undefined || Number.isNaN(value)) return '-'
   return value.toFixed(precision)
+}
+
+function latexToPrint(latex: string) {
+  return latex.replace(/x\^\{(\d+)\}/g, 'x^$1')
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="mt-4 break-inside-avoid">
-      <h2 className="mb-1.5 text-xs font-semibold text-gray-600">{title}</h2>
-      {children}
+    <section className="print-section mt-5">
+      <h2 className="print-kicker">{title}</h2>
+      <div className="mt-2">{children}</div>
     </section>
+  )
+}
+
+function MetricGrid({ rows }: { rows: { label: string; value: string }[] }) {
+  return (
+    <div className="print-metrics">
+      {rows.map((row) => (
+        <div key={row.label} className="print-metric">
+          <div className="print-metric-label">{row.label}</div>
+          <div className="print-metric-value">{row.value}</div>
+        </div>
+      ))}
+    </div>
   )
 }
 
 function KeyValueTable({ rows }: { rows: { label: string; value: string }[] }) {
   return (
-    <table className="w-full border-collapse text-xs">
+    <table className="print-table">
       <tbody>
         {rows.map((row) => (
-          <tr key={row.label} className="border-b border-gray-200">
-            <td className="py-1 pr-4 text-gray-500">{row.label}</td>
-            <td className="py-1 font-mono text-black">{row.value}</td>
+          <tr key={row.label}>
+            <th>{row.label}</th>
+            <td>{row.value}</td>
           </tr>
         ))}
       </tbody>
@@ -50,23 +68,19 @@ function KeyValueTable({ rows }: { rows: { label: string; value: string }[] }) {
 
 function DataTable({ headers, rows }: { headers: string[]; rows: (string | number)[][] }) {
   return (
-    <table className="w-full border-collapse text-xs">
+    <table className="print-table print-table-data">
       <thead>
-        <tr className="border-b border-gray-400 bg-gray-100">
+        <tr>
           {headers.map((h) => (
-            <th key={h} className="whitespace-nowrap px-2 py-1 text-left font-medium text-gray-600">
-              {h}
-            </th>
+            <th key={h}>{h}</th>
           ))}
         </tr>
       </thead>
       <tbody>
         {rows.map((row, i) => (
-          <tr key={i} className="border-b border-gray-200">
+          <tr key={i}>
             {row.map((cell, j) => (
-              <td key={j} className="whitespace-nowrap px-2 py-1 font-mono text-black">
-                {cell}
-              </td>
+              <td key={j}>{cell}</td>
             ))}
           </tr>
         ))}
@@ -97,7 +111,7 @@ function newtonInterpolationTables(result: NumericalResult, precision: number) {
   const table = result.dividedDifferences
   const maxOrder = table?.[0]?.length ?? 0
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       <DataTable
         headers={['i', 'xi', 'f(xi)']}
         rows={points.map((p, i) => [i, formatNumber(p.x, precision), formatNumber(p.y, precision)])}
@@ -136,7 +150,17 @@ function PrintReport({ methodTitle, expression, paramsSummary, result, method, p
   if (!result) return null
 
   const isInterpolation = method === 'newton-interpolacion' || method === 'lagrange'
-  const generatedAt = new Date().toLocaleString()
+  const generatedAt = new Date().toLocaleString('es', { dateStyle: 'medium', timeStyle: 'short' })
+  const polynomial =
+    result.monomialCoefficients && result.monomialCoefficients.length > 0
+      ? monomialLatex(result.monomialCoefficients, precision)
+      : result.polynomial
+  const degree =
+    result.monomialCoefficients && result.monomialCoefficients.length > 0
+      ? result.monomialCoefficients.length - 1
+      : result.interpolationPoints
+        ? result.interpolationPoints.length - 1
+        : null
 
   const metricRows: { label: string; value: string }[] = isInterpolation
     ? [
@@ -147,6 +171,7 @@ function PrintReport({ methodTitle, expression, paramsSummary, result, method, p
             ]
           : []),
         { label: 'Puntos', value: String(result.interpolationPoints?.length ?? 0) },
+        { label: 'Grado', value: degree === null ? '-' : String(degree) },
       ]
     : [
         ...(result.constantDerivative !== undefined
@@ -159,32 +184,38 @@ function PrintReport({ methodTitle, expression, paramsSummary, result, method, p
       ]
 
   return (
-    <div className="hidden print:block print:bg-white print:p-8 print:text-black">
-      <header className="border-b border-gray-400 pb-2">
-        <div className="text-sm font-semibold tracking-[0.18em]">NUMERIA</div>
-        <div className="text-xs text-gray-500">Informe de cálculo - generado {generatedAt}</div>
+    <div className="print-report hidden print:block">
+      <header className="print-header">
+        <div className="print-header-row">
+          <div>
+            <div className="print-brand">NUMERIA</div>
+            <div className="print-brand-sub">Laboratorio de métodos numéricos</div>
+          </div>
+          <div className="print-meta">
+            <div>{generatedAt}</div>
+            <div>Precisión: {precision} decimales</div>
+            <div>{result.executionTime.toFixed(2)} ms</div>
+          </div>
+        </div>
+        <h1 className="print-title">{methodTitle}</h1>
+        {expression && <p className="print-formula">f(x) = {expression}</p>}
+        {isInterpolation && polynomial && <p className="print-formula">{latexToPrint(polynomial)}</p>}
       </header>
 
-      <Section title="Método">
-        <div className="text-sm font-medium">{methodTitle}</div>
-        {expression && <div className="mt-1 font-mono text-sm">f(x) = {expression}</div>}
+      <Section title="Estado">
+        <p className="print-status">{STATUS_LABEL[result.status]}</p>
+        {result.message && <p className="print-status-note">{result.message}</p>}
       </Section>
 
       <Section title="Parámetros">
         <KeyValueTable rows={paramsSummary} />
       </Section>
 
-      <Section title="Estado">
-        <div className="text-sm font-medium">{STATUS_LABEL[result.status]}</div>
-        {result.message && <div className="mt-1 text-xs text-gray-600">{result.message}</div>}
-        <div className="mt-1 text-xs text-gray-500">Tiempo de ejecución: {result.executionTime.toFixed(2)} ms</div>
-      </Section>
-
       <Section title="Resultado">
-        <KeyValueTable rows={metricRows} />
+        <MetricGrid rows={metricRows} />
       </Section>
 
-      <Section title="Tabla">
+      <Section title={isInterpolation ? 'Tablas' : 'Iteraciones'}>
         {isInterpolation
           ? method === 'lagrange'
             ? lagrangeTables(result, precision)
@@ -194,9 +225,20 @@ function PrintReport({ methodTitle, expression, paramsSummary, result, method, p
 
       {chartDataUrl && (
         <Section title="Gráfica">
-          <img src={chartDataUrl} alt="Gráfica del cálculo" className="max-w-full border border-gray-300" />
+          <figure className="print-figure">
+            <img src={chartDataUrl} alt={`Gráfica de ${methodTitle}`} />
+            <figcaption>
+              {isInterpolation
+                ? 'Polinomio interpolante y puntos de datos.'
+                : 'Curva f(x), iteraciones y trayectoria hacia la raíz.'}
+            </figcaption>
+          </figure>
         </Section>
       )}
+
+      <footer className="print-footer">
+        Numeria · informe de cálculo · {methodTitle}
+      </footer>
     </div>
   )
 }

@@ -147,6 +147,23 @@ function errorPoints(result: NumericalResult): { value: [number, number]; n: num
     .map((it) => ({ value: [it.n, it.error] as [number, number], n: it.n }))
 }
 
+function iterationLabel(n: number) {
+  return `i${n + 1}`
+}
+
+function shouldLabelIteration(n: number, total: number, activeIteration: number | null) {
+  if (n === activeIteration) return true
+  if (total <= 8) return true
+  if (n === 0 || n === total - 1) return true
+  return n % Math.ceil(total / 5) === 0
+}
+
+function iterationFormatter(raw: unknown) {
+  const data = (raw as { data?: { n?: number; showLabel?: boolean } }).data
+  if (!data?.showLabel || typeof data.n !== 'number') return ''
+  return iterationLabel(data.n)
+}
+
 export function buildChartOption(
   method: MethodId,
   result: NumericalResult | null,
@@ -196,9 +213,18 @@ function buildRootFindingOption(
   const dx = (xMax - xMin) / 260
   const fxLine = withBreaks(samples, dx)
 
-  const iterationPoints = result.iterationData
-    .filter((it) => Number.isFinite(it.x) && Number.isFinite(it.fx))
-    .map((it) => ({ value: [it.x, it.fx], n: it.n }))
+  const finiteIterations = result.iterationData.filter((it) => Number.isFinite(it.x) && Number.isFinite(it.fx))
+  const iterationPoints = finiteIterations.map((it) => ({
+    value: [it.x, it.fx] as [number, number],
+    n: it.n,
+    showLabel: shouldLabelIteration(it.n, finiteIterations.length, activeIteration),
+  }))
+  const labeledIterationLines = finiteIterations
+    .filter((it) => shouldLabelIteration(it.n, finiteIterations.length, activeIteration))
+    .map((it) => ({
+      xAxis: it.x,
+      label: { formatter: iterationLabel(it.n) },
+    }))
 
   const path = trajectoryPath(result.iterationData)
 
@@ -224,8 +250,12 @@ function buildRootFindingOption(
       data: fxLine,
       showSymbol: false,
       sampling: 'lttb',
-      lineStyle: { width: 2, color: c.fx },
+      lineStyle: { width: 2.4, color: c.fx },
       itemStyle: { color: c.fx },
+      emphasis: {
+        focus: 'series',
+        lineStyle: { width: 3 },
+      },
       markLine: {
         silent: true,
         symbol: 'none',
@@ -244,8 +274,12 @@ function buildRootFindingOption(
       yAxisIndex: 0,
       data: path,
       showSymbol: false,
-      lineStyle: { width: 1.5, color: c.path, type: 'solid' },
+      lineStyle: { width: 2, color: c.path, type: 'solid' },
       itemStyle: { color: c.path },
+      emphasis: {
+        focus: 'series',
+        lineStyle: { width: 2.5 },
+      },
     })
   }
 
@@ -272,6 +306,40 @@ function buildRootFindingOption(
       symbolSize: 8,
       cursor: 'pointer',
       itemStyle: { color: c.points, borderColor: c.markerBorder, borderWidth: 1 },
+      label: {
+        show: true,
+        formatter: iterationFormatter,
+        position: 'top',
+        distance: 8,
+        color: c.points,
+        backgroundColor: c.tooltipBg,
+        borderColor: c.line,
+        borderWidth: 1,
+        borderRadius: 4,
+        padding: [2, 5],
+        fontFamily: 'IBM Plex Mono, ui-monospace, monospace',
+        fontSize: 10,
+      },
+      labelLayout: { hideOverlap: true },
+      markLine:
+        labeledIterationLines.length > 0
+          ? {
+              silent: true,
+              symbol: 'none',
+              lineStyle: { color: c.points, type: 'dashed', width: 1, opacity: 0.32 },
+              label: {
+                color: c.points,
+                fontFamily: 'IBM Plex Mono, ui-monospace, monospace',
+                fontSize: 10,
+                position: 'insideEndTop',
+              },
+              data: labeledIterationLines,
+            }
+          : undefined,
+      emphasis: {
+        focus: 'self',
+        scale: 1.35,
+      },
     })
   }
 
@@ -326,6 +394,14 @@ function buildRootFindingOption(
         symbol: 'circle',
         silent: true,
         itemStyle: { color: 'transparent', borderColor: c.active, borderWidth: 2 },
+        label: {
+          show: true,
+          formatter: iterationLabel(active.n),
+          position: 'right',
+          color: c.active,
+          fontFamily: 'IBM Plex Mono, ui-monospace, monospace',
+          fontSize: 11,
+        },
         zlevel: 1,
       })
       series.push({

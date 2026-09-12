@@ -247,7 +247,7 @@ function App() {
       ),
     [selectedMethod, activeResult, precision, isRootFinding, activeIteration, chartLayers, theme],
   )
-  const chartHeight = isRootFinding ? 440 : 360
+  const chartHeight = isRootFinding ? 540 : 460
 
   const paramsSummary = isRootFinding
     ? [
@@ -268,6 +268,13 @@ function App() {
   const handleExportPdf = () => {
     if (!activeResult) return
     setPrintChartUrl(chartRef.current?.getDataUrl() ?? null)
+    const previousTitle = document.title
+    document.title = `Numeria - ${METHOD_TITLE[selectedMethod]}`
+    const restoreTitle = () => {
+      document.title = previousTitle
+      window.removeEventListener('afterprint', restoreTitle)
+    }
+    window.addEventListener('afterprint', restoreTitle)
     requestAnimationFrame(() => requestAnimationFrame(() => window.print()))
   }
 
@@ -317,26 +324,64 @@ function App() {
     />
   )
 
+  const chartBadge = !activeResult
+    ? 'sin ejecutar'
+    : isInterpolation
+      ? `${activeResult.interpolationPoints?.length ?? 0} ${(activeResult.interpolationPoints?.length ?? 0) === 1 ? 'punto' : 'puntos'}`
+      : `${activeIterations.length} ${activeIterations.length === 1 ? 'iteración' : 'iteraciones'}`
+
   const chartPanel = (
-    <div className="flex flex-col gap-3 @min-[960px]:sticky @min-[960px]:top-4">
-      <h2 className="text-sm font-medium text-text">Gráfica</h2>
-      {isRootFinding && (
-        <ChartControls
-          layers={chartLayers}
-          onLayersChange={setChartLayers}
-          iterationCount={activeIterations.length}
-          activeIteration={activeIteration}
-          onActiveIterationChange={setActiveIteration}
-        />
-      )}
+    <section className="flex flex-col overflow-hidden rounded-box border border-border-strong bg-panel shadow-float @min-[1080px]:sticky @min-[1080px]:top-4">
+      <div className="border-b border-border bg-panel-alt/70 px-4 py-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="font-mono-nums text-[11px] uppercase tracking-[0.16em] text-accent-strong">
+              Vista principal
+            </p>
+            <h2 className="mt-1 text-base font-semibold text-text">
+              {isInterpolation ? 'Gráfica del interpolante' : 'Gráfica de convergencia'}
+            </h2>
+          </div>
+          <span className="rounded-box border border-border-strong px-2 py-1 font-mono-nums text-[11px] text-text-muted">
+            {chartBadge}
+          </span>
+        </div>
+        {isRootFinding && (
+          <div className="mt-3">
+            <ChartControls
+              layers={chartLayers}
+              onLayersChange={setChartLayers}
+              iterationCount={activeIterations.length}
+              activeIteration={activeIteration}
+              onActiveIterationChange={setActiveIteration}
+            />
+          </div>
+        )}
+      </div>
       <ConvergenceChart
         ref={chartRef}
         option={chartOption}
         height={chartHeight}
         onIterationClick={isRootFinding ? setActiveIteration : undefined}
         colorScheme={theme}
+        frame="flush"
+        emptyHint={
+          isInterpolation
+            ? {
+                title: 'Lista para visualizar',
+                hint: 'Ejecuta el método para trazar P(x) y los puntos (xᵢ, yᵢ) que lo definen.',
+                meta: 'x0, x1, x2',
+                kind: 'interpolation',
+              }
+            : {
+                title: 'Lista para visualizar',
+                hint: 'Ejecuta el método para trazar f(x), los saltos de iteración y el acercamiento a la raíz.',
+                meta: 'i1 -> i2 -> i3',
+                kind: 'roots',
+              }
+        }
       />
-    </div>
+    </section>
   )
 
   const resultTabs = (
@@ -460,7 +505,7 @@ function App() {
 
               {isRootFinding && (
                 <>
-                  <div className="grid grid-cols-1 gap-8 @min-[960px]:grid-cols-2 @min-[960px]:items-start">
+                  <div className="grid grid-cols-1 gap-8 @min-[1080px]:grid-cols-[minmax(320px,0.74fr)_minmax(560px,1.36fr)] @min-[1080px]:items-start">
                     <div className="flex flex-col gap-4">
                       <Panel title="f(x)">
                         <MathInput value={expression} onChange={setExpression} placeholder="x^3-x-2" onSubmit={handleExecute} />
@@ -477,7 +522,7 @@ function App() {
 
               {isInterpolation && (
                 <>
-                  <div className="grid grid-cols-1 gap-8 @min-[960px]:grid-cols-2 @min-[960px]:items-start">
+                  <div className="grid grid-cols-1 gap-8 @min-[1080px]:grid-cols-[minmax(320px,0.74fr)_minmax(560px,1.36fr)] @min-[1080px]:items-start">
                     <div className="flex flex-col gap-4">
                       <Panel>{paramsForm}</Panel>
                       {actionRow}

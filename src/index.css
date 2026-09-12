@@ -207,6 +207,56 @@ math-field.resulting-polynomial {
   font-size: 1.75rem;
 }
 
+.chart-empty-surface {
+  background:
+    radial-gradient(circle at 16% 18%, color-mix(in srgb, var(--color-accent) 18%, transparent), transparent 24%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-panel-alt) 72%, transparent), transparent);
+}
+
+.chart-empty-grid {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 1;
+  opacity: 0.62;
+}
+
+.chart-empty-curve {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 740;
+  stroke-dashoffset: 740;
+  opacity: 0.72;
+  animation: chart-empty-draw 1.45s var(--ease-out-ui) forwards;
+}
+
+.chart-empty-guide {
+  fill: none;
+  stroke: var(--color-warning);
+  stroke-width: 1.2;
+  stroke-dasharray: 5 7;
+  opacity: 0.62;
+}
+
+.chart-empty-point {
+  fill: var(--color-warning);
+  stroke: var(--color-bg);
+  stroke-width: 2;
+}
+
+.chart-empty-label {
+  fill: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+@keyframes chart-empty-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 @media (hover: hover) and (pointer: fine) {
   .hover-fine\:bg-panel-alt:hover {
     background-color: var(--color-panel-alt);
@@ -235,7 +285,8 @@ math-field.resulting-polynomial {
 
 @media (prefers-reduced-motion: reduce) {
   [data-slot='select-content'],
-  [data-slot='tooltip-content'] {
+  [data-slot='tooltip-content'],
+  .chart-empty-curve {
     animation: none;
   }
 
@@ -246,5 +297,176 @@ math-field.resulting-polynomial {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 14mm 16mm;
+  }
+
+  html,
+  body,
+  #root {
+    height: auto;
+    background: white !important;
+    color: #16181d;
+  }
+
+  .print-report {
+    display: block;
+    max-width: 180mm;
+    margin: 0 auto;
+    color: #16181d;
+    font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+    font-size: 11pt;
+    line-height: 1.45;
+  }
+
+  .print-header {
+    padding-bottom: 12px;
+    border-bottom: 2px solid #157ea3;
+  }
+
+  .print-header-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .print-brand {
+    font-size: 11pt;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+  }
+
+  .print-brand-sub,
+  .print-meta {
+    font-size: 9pt;
+    color: #5b6573;
+  }
+
+  .print-meta {
+    text-align: right;
+  }
+
+  .print-title {
+    margin: 14px 0 4px;
+    font-size: 18pt;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+
+  .print-formula {
+    margin: 0;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 11pt;
+  }
+
+  .print-kicker {
+    margin: 0;
+    font-size: 8.5pt;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #157ea3;
+  }
+
+  .print-section {
+    break-inside: avoid;
+  }
+
+  .print-status {
+    margin: 0;
+    font-size: 12pt;
+    font-weight: 600;
+  }
+
+  .print-status-note {
+    margin: 4px 0 0;
+    font-size: 9.5pt;
+    color: #3d4654;
+  }
+
+  .print-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border: 1px solid #c9d1dc;
+  }
+
+  .print-metric {
+    padding: 8px 10px;
+    border-right: 1px solid #c9d1dc;
+    border-bottom: 1px solid #c9d1dc;
+  }
+
+  .print-metric:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .print-metric-label {
+    font-size: 8.5pt;
+    color: #5b6573;
+  }
+
+  .print-metric-value {
+    margin-top: 2px;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 11pt;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+  }
+
+  .print-table th,
+  .print-table td {
+    padding: 5px 8px;
+    text-align: left;
+    border-bottom: 1px solid #d5dbe3;
+    vertical-align: top;
+  }
+
+  .print-table th {
+    font-weight: 600;
+    color: #3d4654;
+  }
+
+  .print-table td {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .print-table-data thead th {
+    border-bottom: 1px solid #8b96a5;
+    background: #eef2f6;
+  }
+
+  .print-figure {
+    margin: 0;
+  }
+
+  .print-figure img {
+    width: 100%;
+    border: 1px solid #c9d1dc;
+  }
+
+  .print-figure figcaption {
+    margin-top: 6px;
+    font-size: 8.5pt;
+    color: #5b6573;
+  }
+
+  .print-footer {
+    margin-top: 18px;
+    padding-top: 8px;
+    border-top: 1px solid #c9d1dc;
+    font-size: 8pt;
+    color: #5b6573;
   }
 }
