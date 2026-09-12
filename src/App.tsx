@@ -1,10 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import type { InterpolationParams, RootFindingParams } from '@/components/ParamsForm/ParamsForm'
 import { ChartControls } from '@/components/ConvergenceChart/ChartControls'
-import { ComparisonView } from '@/components/ComparisonView/ComparisonView'
-import { ConvergenceChart } from '@/components/ConvergenceChart/ConvergenceChart'
 import type { ConvergenceChartHandle } from '@/components/ConvergenceChart/ConvergenceChart'
 import { buildChartOption, DEFAULT_CHART_LAYERS } from '@/components/ConvergenceChart/chartOptions'
 import type { ChartLayers } from '@/components/ConvergenceChart/chartOptions'
@@ -30,6 +28,22 @@ import type { MethodId, NumericalResult, Point } from '@/engine/types'
 import { exportIterationsCsv } from '@/lib/csv'
 import { applyTheme, readStoredTheme } from '@/lib/theme'
 import type { ColorScheme } from '@/lib/theme'
+
+const LazyConvergenceChart = lazy(() =>
+  import('@/components/ConvergenceChart/ConvergenceChart').then((m) => ({ default: m.ConvergenceChart })),
+)
+const LazyComparisonView = lazy(() =>
+  import('@/components/ComparisonView/ComparisonView').then((m) => ({ default: m.ComparisonView })),
+)
+
+function ChartFallback({ height = 320, frame = 'default' }: { height?: number; frame?: 'default' | 'flush' }) {
+  return (
+    <div
+      className={frame === 'flush' ? 'bg-transparent' : 'rounded-box border border-border bg-panel'}
+      style={{ height }}
+    />
+  )
+}
 
 const METHOD_TITLE: Record<MethodId, string> = {
   'newton-raphson': 'Newton-Raphson',
@@ -358,29 +372,31 @@ function App() {
           </div>
         )}
       </div>
-      <ConvergenceChart
-        ref={chartRef}
-        option={chartOption}
-        height={chartHeight}
-        onIterationClick={isRootFinding ? setActiveIteration : undefined}
-        colorScheme={theme}
-        frame="flush"
-        emptyHint={
-          isInterpolation
-            ? {
-                title: 'Lista para visualizar',
-                hint: 'Ejecuta el método para trazar P(x) y los puntos (xᵢ, yᵢ) que lo definen.',
-                meta: 'x0, x1, x2',
-                kind: 'interpolation',
-              }
-            : {
-                title: 'Lista para visualizar',
-                hint: 'Ejecuta el método para trazar f(x), los saltos de iteración y el acercamiento a la raíz.',
-                meta: 'i1 -> i2 -> i3',
-                kind: 'roots',
-              }
-        }
-      />
+      <Suspense fallback={<ChartFallback height={chartHeight} frame="flush" />}>
+        <LazyConvergenceChart
+          ref={chartRef}
+          option={chartOption}
+          height={chartHeight}
+          onIterationClick={isRootFinding ? setActiveIteration : undefined}
+          colorScheme={theme}
+          frame="flush"
+          emptyHint={
+            isInterpolation
+              ? {
+                  title: 'Lista para visualizar',
+                  hint: 'Ejecuta el método para trazar P(x) y los puntos (xᵢ, yᵢ) que lo definen.',
+                  meta: 'x0, x1, x2',
+                  kind: 'interpolation',
+                }
+              : {
+                  title: 'Lista para visualizar',
+                  hint: 'Ejecuta el método para trazar f(x), los saltos de iteración y el acercamiento a la raíz.',
+                  meta: 'i1 -> i2 -> i3',
+                  kind: 'roots',
+                }
+          }
+        />
+      </Suspense>
     </section>
   )
 
@@ -494,12 +510,14 @@ function App() {
                   </Panel>
                   <Panel title="Parámetros">{paramsForm}</Panel>
                   {actionRow}
-                  <ComparisonView
-                    classic={classicResult}
-                    constant={constantResult}
-                    precision={precision}
-                    colorScheme={theme}
-                  />
+                  <Suspense fallback={<ChartFallback height={280} />}>
+                    <LazyComparisonView
+                      classic={classicResult}
+                      constant={constantResult}
+                      precision={precision}
+                      colorScheme={theme}
+                    />
+                  </Suspense>
                 </>
               )}
 
