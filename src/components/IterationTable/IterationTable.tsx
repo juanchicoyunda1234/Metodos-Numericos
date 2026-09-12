@@ -1,9 +1,10 @@
-import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
+import { createColumnHelper, flexRender, getCoreRowModel, getFilteredRowModel, useReactTable } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { ResultingPolynomial } from '@/components/ResultSummary/ResultSummary'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { lagrangeBasisLatex } from '@/engine/lagrangeInterpolation'
 import { monomialLatex } from '@/engine/polynomial'
 import type { Iteration, LagrangeTerm, MethodId, Point } from '@/engine/types'
@@ -25,6 +26,8 @@ interface IterationTableProps {
   dividedDifferences?: number[][]
   lagrangeTerms?: LagrangeTerm[]
   monomialCoefficients?: number[]
+  activeIteration?: number | null
+  onIterationSelect?: (n: number) => void
 }
 
 function EmptyState({ message }: { message: string }) {
@@ -47,12 +50,17 @@ function NewtonIterationTable({
   method,
   iterations,
   precision,
+  activeIteration = null,
+  onIterationSelect,
 }: {
   method: MethodId
   iterations: Iteration[]
   precision: number
+  activeIteration?: number | null
+  onIterationSelect?: (n: number) => void
 }) {
   const derivativeLabel = method === 'newton-raphson-constante' ? "d = f'(x₀)" : "f'(xₙ)"
+  const [search, setSearch] = useState('')
 
   const columns = useMemo(
     () => [
@@ -81,40 +89,71 @@ function NewtonIterationTable({
     [derivativeLabel, precision],
   )
 
-  const table = useReactTable({ data: iterations, columns, getCoreRowModel: getCoreRowModel() })
+  const table = useReactTable({
+    data: iterations,
+    columns,
+    state: { globalFilter: search },
+    onGlobalFilterChange: setSearch,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  })
 
   if (iterations.length === 0) {
     return <EmptyState message="Sin iteraciones todavía" />
   }
 
   return (
-    <TableShell>
-      <thead>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <tr key={headerGroup.id} className="border-b border-border-strong bg-panel-alt">
-            {headerGroup.headers.map((header) => (
-              <th
-                key={header.id}
-                className="whitespace-nowrap px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wide text-text-muted"
-              >
-                {flexRender(header.column.columnDef.header, header.getContext())}
-              </th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody>
-        {table.getRowModel().rows.map((row, i) => (
-          <tr key={row.id} className={cn('border-b border-border', i % 2 === 1 && 'bg-panel-alt/40')}>
-            {row.getVisibleCells().map((cell) => (
-              <td key={cell.id} className="whitespace-nowrap px-3 py-1.5 font-mono-nums text-text">
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+    <div className="flex flex-col gap-2">
+      <Input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Buscar en la tabla…"
+        className="max-w-[240px]"
+      />
+      <TableShell>
+        <thead>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id} className="border-b border-border-strong bg-panel-alt">
+              {headerGroup.headers.map((header) => (
+                <th
+                  key={header.id}
+                  className="whitespace-nowrap px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wide text-text-muted"
+                >
+                  {flexRender(header.column.columnDef.header, header.getContext())}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map((row, i) => (
+            <tr
+              key={row.id}
+              onClick={() => onIterationSelect?.(row.original.n)}
+              className={cn(
+                'border-b border-border',
+                i % 2 === 1 && 'bg-panel-alt/40',
+                onIterationSelect && 'cursor-pointer hover:bg-panel-alt',
+                row.original.n === activeIteration && 'bg-accent-dim',
+              )}
+            >
+              {row.getVisibleCells().map((cell) => (
+                <td key={cell.id} className="whitespace-nowrap px-3 py-1.5 font-mono-nums text-text">
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+          {table.getRowModel().rows.length === 0 && (
+            <tr>
+              <td colSpan={columns.length} className="px-3 py-4 text-center text-sm text-text-dim">
+                Sin coincidencias
               </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </TableShell>
+            </tr>
+          )}
+        </tbody>
+      </TableShell>
+    </div>
   )
 }
 
@@ -384,6 +423,8 @@ function IterationTable({
   dividedDifferences,
   lagrangeTerms,
   monomialCoefficients,
+  activeIteration,
+  onIterationSelect,
 }: IterationTableProps) {
   const resulting =
     monomialCoefficients && monomialCoefficients.length > 0 ? (
@@ -430,7 +471,15 @@ function IterationTable({
     )
   }
 
-  return <NewtonIterationTable method={method} iterations={iterations} precision={precision} />
+  return (
+    <NewtonIterationTable
+      method={method}
+      iterations={iterations}
+      precision={precision}
+      activeIteration={activeIteration}
+      onIterationSelect={onIterationSelect}
+    />
+  )
 }
 
 export { IterationTable }

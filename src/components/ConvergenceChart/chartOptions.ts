@@ -17,6 +17,7 @@ const COLOR = {
   classic: '#45b8e0',
   constant: '#f0a53c',
   fxMuted: '#8994a6',
+  active: '#e3e9f1',
 }
 
 function axisCommon() {
@@ -65,10 +66,10 @@ function trajectoryPath(iterations: Iteration[], limit = 12): ([number, number] 
   return path
 }
 
-function xnSeries(result: NumericalResult): [number, number][] {
-  const data = result.iterationData.map((it) => [it.n, it.x] as [number, number])
+function xnSeries(result: NumericalResult): { value: [number, number]; n: number }[] {
+  const data = result.iterationData.map((it) => ({ value: [it.n, it.x] as [number, number], n: it.n }))
   const last = result.iterationData.at(-1)
-  if (last && Number.isFinite(last.xNext)) data.push([last.n + 1, last.xNext])
+  if (last && Number.isFinite(last.xNext)) data.push({ value: [last.n + 1, last.xNext], n: last.n })
   return data
 }
 
@@ -81,11 +82,12 @@ export function buildChartOption(
   method: MethodId,
   result: NumericalResult | null,
   precision: number,
+  activeIteration: number | null = null,
 ): EChartsOption | null {
   if (!result) return null
 
   if (method === 'newton-raphson' || method === 'newton-raphson-constante') {
-    return buildRootFindingOption(result, precision)
+    return buildRootFindingOption(result, precision, activeIteration)
   }
 
   if (method === 'newton-interpolacion' || method === 'lagrange') {
@@ -95,7 +97,11 @@ export function buildChartOption(
   return null
 }
 
-function buildRootFindingOption(result: NumericalResult, precision: number): EChartsOption | null {
+function buildRootFindingOption(
+  result: NumericalResult,
+  precision: number,
+  activeIteration: number | null = null,
+): EChartsOption | null {
   const expression = result.equation
   if (!expression) return null
 
@@ -171,6 +177,7 @@ function buildRootFindingOption(result: NumericalResult, precision: number): ECh
       yAxisIndex: 0,
       data: iterationPoints,
       symbolSize: 8,
+      cursor: 'pointer',
       itemStyle: { color: COLOR.points, borderColor: '#0a0d12', borderWidth: 1 },
     },
     {
@@ -181,6 +188,7 @@ function buildRootFindingOption(result: NumericalResult, precision: number): ECh
       data: xnData,
       showSymbol: true,
       symbolSize: 7,
+      cursor: 'pointer',
       lineStyle: { width: 2, color: COLOR.fx },
       itemStyle: { color: COLOR.fx },
       markLine:
@@ -207,6 +215,37 @@ function buildRootFindingOption(result: NumericalResult, precision: number): ECh
       symbol: 'diamond',
       itemStyle: { color: COLOR.root, borderColor: '#0a0d12', borderWidth: 1 },
     })
+  }
+
+  if (activeIteration !== null) {
+    const active = result.iterationData.find((it) => it.n === activeIteration)
+    if (active && Number.isFinite(active.x) && Number.isFinite(active.fx)) {
+      const activeFxPoint = [{ value: [active.x, active.fx] as [number, number], n: active.n }]
+      const activeXnPoint = [{ value: [active.n, active.x] as [number, number], n: active.n }]
+      series.push({
+        name: 'Iteración activa',
+        type: 'scatter',
+        xAxisIndex: 0,
+        yAxisIndex: 0,
+        data: activeFxPoint,
+        symbolSize: 18,
+        symbol: 'circle',
+        silent: true,
+        itemStyle: { color: 'transparent', borderColor: COLOR.active, borderWidth: 2 },
+        zlevel: 1,
+      })
+      series.push({
+        name: 'Iteración activa (xₙ)',
+        type: 'scatter',
+        xAxisIndex: 1,
+        yAxisIndex: 1,
+        data: activeXnPoint,
+        symbolSize: 15,
+        silent: true,
+        itemStyle: { color: 'transparent', borderColor: COLOR.active, borderWidth: 2 },
+        zlevel: 1,
+      })
+    }
   }
 
   return {

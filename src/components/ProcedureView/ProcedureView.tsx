@@ -1,4 +1,8 @@
+import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
+
 import { ResultingPolynomial } from '@/components/ResultSummary/ResultSummary'
+import { Button } from '@/components/ui/button'
 import {
   lagrangeBasisAtLatex,
   lagrangeBasisLatex,
@@ -8,6 +12,7 @@ import {
 import { newtonEvaluationLatex, newtonPolynomialLatex } from '@/engine/newtonInterpolation'
 import { monomialLatex } from '@/engine/polynomial'
 import type { Iteration, LagrangeTerm, MethodId, NumericalResult, Point } from '@/engine/types'
+import { cn } from '@/lib/utils'
 
 const GENERAL_FORMULA: Record<MethodId, string> = {
   'newton-raphson': "x_{n+1} = x_n - \\dfrac{f(x_n)}{f'(x_n)}",
@@ -22,6 +27,8 @@ interface ProcedureViewProps {
   method: MethodId
   precision: number
   result: NumericalResult | null
+  activeIteration?: number | null
+  onIterationSelect?: (n: number) => void
 }
 
 function formatValue(value: number | undefined, precision: number) {
@@ -29,28 +36,143 @@ function formatValue(value: number | undefined, precision: number) {
   return value.toFixed(precision)
 }
 
-function ProcedureStep({ iteration, precision, derivativeSymbol }: {
+function ProcedureStepBody({ iteration, precision, derivativeSymbol }: {
   iteration: Iteration
   precision: number
   derivativeSymbol: string
 }) {
+  const latex = `x_{${iteration.n + 1}} = ${formatValue(iteration.x, precision)} - \\dfrac{${formatValue(
+    iteration.fx,
+    precision,
+  )}}{${formatValue(iteration.derivative, precision)}} = ${formatValue(iteration.xNext, precision)}`
   return (
-    <div className="border border-border px-4 py-3">
-      <div className="mb-1 text-[11px] uppercase tracking-wide text-text-dim">Iteración {iteration.n + 1}</div>
-      {(() => {
-        const latex = `x_{${iteration.n + 1}} = ${formatValue(iteration.x, precision)} - \\dfrac{${formatValue(
-          iteration.fx,
-          precision,
-        )}}{${formatValue(iteration.derivative, precision)}} = ${formatValue(iteration.xNext, precision)}`
-        return (
-          <math-field key={latex} read-only className="block">
-            {latex}
-          </math-field>
-        )
-      })()}
+    <>
+      <math-field key={latex} read-only className="block">
+        {latex}
+      </math-field>
       <div className="mt-1 text-xs text-text-muted">
         {derivativeSymbol} = {formatValue(iteration.derivative, precision)} · Error = {formatValue(iteration.error, precision)}
       </div>
+    </>
+  )
+}
+
+function TimelineNode({
+  label,
+  active,
+  onClick,
+  isLast = false,
+  children,
+}: {
+  label: string
+  active: boolean
+  onClick?: () => void
+  isLast?: boolean
+  children: ReactNode
+}) {
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        'relative flex flex-col gap-1 border-l-2 py-3 pl-6',
+        isLast ? 'border-transparent' : 'border-border',
+        onClick && 'cursor-pointer hover:bg-panel-alt',
+      )}
+    >
+      <span
+        className={cn(
+          'absolute -left-[7px] top-4 h-3 w-3 rounded-full border-2 border-bg',
+          active ? 'bg-accent' : 'bg-text-dim',
+        )}
+      />
+      <div className={cn('text-[11px] uppercase tracking-wide', active ? 'text-accent-strong' : 'text-text-dim')}>
+        {label}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+const MANY_ITERATIONS = 10
+const EDGE_COUNT = 5
+
+function statusTimelineLabel(status: NumericalResult['status']) {
+  if (status === 'CONVERGIO') return 'CONVERGENCIA'
+  if (status === 'NO_CONVERGIO') return 'NO CONVERGIÓ'
+  return 'ERROR NUMÉRICO'
+}
+
+function RootFindingTimeline({
+  result,
+  precision,
+  derivativeSymbol,
+  activeIteration,
+  onIterationSelect,
+}: {
+  result: NumericalResult
+  precision: number
+  derivativeSymbol: string
+  activeIteration: number | null
+  onIterationSelect?: (n: number) => void
+}) {
+  const iterations = result.iterationData
+  const [showAll, setShowAll] = useState(false)
+
+  useEffect(() => {
+    setShowAll(false)
+  }, [result])
+
+  if (iterations.length === 0) {
+    return (
+      <div className="flex h-24 items-center justify-center border border-dashed border-border text-sm text-text-dim">
+        Ejecuta el método para ver el procedimiento paso a paso
+      </div>
+    )
+  }
+
+  const truncated = !showAll && iterations.length > MANY_ITERATIONS
+  const firstIterations = truncated ? iterations.slice(0, EDGE_COUNT) : iterations
+  const lastIterations = truncated ? iterations.slice(-EDGE_COUNT) : []
+  const hiddenCount = iterations.length - EDGE_COUNT * 2
+
+  const renderIterationNode = (iteration: Iteration) => (
+    <TimelineNode
+      key={iteration.n}
+      label={`Iteración ${iteration.n + 1}`}
+      active={activeIteration === iteration.n}
+      onClick={onIterationSelect ? () => onIterationSelect(iteration.n) : undefined}
+    >
+      <ProcedureStepBody iteration={iteration} precision={precision} derivativeSymbol={derivativeSymbol} />
+    </TimelineNode>
+  )
+
+  return (
+    <div className="flex flex-col">
+      <TimelineNode
+        label="Iteración 0"
+        active={activeIteration === iterations[0].n}
+        onClick={onIterationSelect ? () => onIterationSelect(iterations[0].n) : undefined}
+      >
+        <math-field key={`x0-start`} read-only className="block">
+          {`x_0 = ${formatValue(iterations[0].x, precision)}`}
+        </math-field>
+      </TimelineNode>
+
+      {firstIterations.map(renderIterationNode)}
+
+      {truncated && (
+        <div className="border-l-2 border-border py-2 pl-6">
+          <Button type="button" variant="outline" size="sm" onClick={() => setShowAll(true)}>
+            Mostrar todas las iteraciones ({hiddenCount} ocultas)
+          </Button>
+        </div>
+      )}
+
+      {truncated && lastIterations.map(renderIterationNode)}
+
+      <TimelineNode label={statusTimelineLabel(result.status)} active={false} isLast>
+        <div className="text-sm text-text-muted">{result.message ?? `Tolerancia ε alcanzada en ${result.iterations} iteraciones.`}</div>
+      </TimelineNode>
     </div>
   )
 }
@@ -208,8 +330,7 @@ function LagrangeInterpolationProcedure({
   )
 }
 
-function ProcedureView({ method, precision, result }: ProcedureViewProps) {
-  const iterations = result?.iterationData ?? []
+function ProcedureView({ method, precision, result, activeIteration = null, onIterationSelect }: ProcedureViewProps) {
   const constantDerivative = result?.constantDerivative
   const derivativeSymbol = method === 'newton-raphson-constante' ? "d = f'(x₀)" : "f'(xₙ)"
   const isRootFinding = method === 'newton-raphson' || method === 'newton-raphson-constante'
@@ -239,26 +360,20 @@ function ProcedureView({ method, precision, result }: ProcedureViewProps) {
         </div>
       )}
 
-      {isRootFinding && (
-        <div className="flex flex-col gap-2">
-          {iterations.length === 0 ? (
-            constantDerivative === undefined ? (
-              <div className="flex h-24 items-center justify-center border border-dashed border-border text-sm text-text-dim">
-                Ejecuta el método para ver el procedimiento paso a paso
-              </div>
-            ) : null
-          ) : (
-            iterations.map((iteration) => (
-              <ProcedureStep
-                key={iteration.n}
-                iteration={iteration}
-                precision={precision}
-                derivativeSymbol={derivativeSymbol}
-              />
-            ))
-          )}
-        </div>
-      )}
+      {isRootFinding &&
+        (result && result.iterationData.length > 0 ? (
+          <RootFindingTimeline
+            result={result}
+            precision={precision}
+            derivativeSymbol={derivativeSymbol}
+            activeIteration={activeIteration}
+            onIterationSelect={onIterationSelect}
+          />
+        ) : constantDerivative === undefined ? (
+          <div className="flex h-24 items-center justify-center border border-dashed border-border text-sm text-text-dim">
+            Ejecuta el método para ver el procedimiento paso a paso
+          </div>
+        ) : null)}
 
       {isNewtonInterpolation &&
         (result?.interpolationPoints && result.dividedDifferences ? (

@@ -64,6 +64,7 @@ function App() {
   const [constantResult, setConstantResult] = useState<NumericalResult | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [printChartUrl, setPrintChartUrl] = useState<string | null>(null)
+  const [activeIteration, setActiveIteration] = useState<number | null>(null)
   const chartRef = useRef<ConvergenceChartHandle>(null)
 
   const isInterpolation = selectedMethod === 'newton-interpolacion' || selectedMethod === 'lagrange'
@@ -76,10 +77,12 @@ function App() {
     setClassicResult(null)
     setConstantResult(null)
     setErrorMessage(null)
+    setActiveIteration(null)
   }
 
   const handleExecute = () => {
     setErrorMessage(null)
+    setActiveIteration(null)
 
     const isClassic = selectedMethod === 'newton-raphson'
     const isConstant = selectedMethod === 'newton-raphson-constante'
@@ -169,8 +172,8 @@ function App() {
     y: p.y.trim() === '' ? Number.NaN : Number(p.y),
   }))
   const chartOption = useMemo(
-    () => buildChartOption(selectedMethod, activeResult, precision),
-    [selectedMethod, activeResult, precision],
+    () => buildChartOption(selectedMethod, activeResult, precision, isRootFinding ? activeIteration : null),
+    [selectedMethod, activeResult, precision, isRootFinding, activeIteration],
   )
   const chartHeight = isRootFinding ? 440 : 340
 
@@ -286,15 +289,28 @@ function App() {
                     dividedDifferences={activeResult?.dividedDifferences}
                     lagrangeTerms={activeResult?.lagrangeTerms}
                     monomialCoefficients={activeResult?.monomialCoefficients}
+                    activeIteration={isRootFinding ? activeIteration : null}
+                    onIterationSelect={isRootFinding ? setActiveIteration : undefined}
                   />
                   <div className="flex flex-col gap-2">
                     <div className="text-[11px] uppercase tracking-wide text-text-dim">Gráfica</div>
-                    <ConvergenceChart ref={chartRef} option={chartOption} height={chartHeight} />
+                    <ConvergenceChart
+                      ref={chartRef}
+                      option={chartOption}
+                      height={chartHeight}
+                      onIterationClick={isRootFinding ? setActiveIteration : undefined}
+                    />
                   </div>
                 </TabsContent>
 
                 <TabsContent value="procedimiento" className="pt-4">
-                  <ProcedureView method={selectedMethod} precision={precision} result={activeResult} />
+                  <ProcedureView
+                    method={selectedMethod}
+                    precision={precision}
+                    result={activeResult}
+                    activeIteration={isRootFinding ? activeIteration : null}
+                    onIterationSelect={isRootFinding ? setActiveIteration : undefined}
+                  />
                 </TabsContent>
               </Tabs>
             )}
